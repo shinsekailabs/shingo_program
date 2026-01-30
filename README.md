@@ -1,7 +1,7 @@
 # Shingo Program
 
 > [!IMPORTANT]
-> 100% AI-slop free 
+> 100% AI-slop free  
 > Developed without any vibecoding bullshit
 
 ## About
