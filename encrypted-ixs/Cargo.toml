@@ -1,0 +1,9 @@
+[package]
+name = "encrypted-ixs"
+version = "0.1.0"
+edition = "2021"
+license = "BUSL-1.1"
+
+[dependencies]
+arcis = "0.6.3"
+
