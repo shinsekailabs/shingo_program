@@ -8,7 +8,6 @@
 
 The Shingo Program is the smart contract powering https://shingo.finance
 
-
 ## Using Arcium for decentralized encryption and decryption
 
 ![Arcium](./docs/arcium_concept.png)
@@ -33,6 +32,8 @@ Explorer link : https://explorer.solana.com/address/4aaevFj8JyDdWDXLGCGBSRDJBWNe
 
 Orbmarkets link : https://orbmarkets.io/address/4aaevFj8JyDdWDXLGCGBSRDJBWNevcV2kT3Khc1WxNNU/history?cluster=devnet&hideSpam=true
 
+Solscan link : https://solscan.io/account/4aaevFj8JyDdWDXLGCGBSRDJBWNevcV2kT3Khc1WxNNU?cluster=devnet
+
 All our programs are immutable. If I forgot to make a program immutable, ping me and I'll make it immutable immediately.
 
 ## Mainnet address ( ProgramID )
@@ -49,9 +50,9 @@ Obrmarkets link : (soon)
 
 All our programs are immutable. If I forgot to make a program immutable, ping me and I'll make it immutable immediately.
 
-## The team 
+## The team
 
-Team's address: 
+Team's address:
 
 ```
 HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ
