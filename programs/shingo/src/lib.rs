@@ -239,6 +239,7 @@ pub struct ClearSignal {
 #[event]
 pub struct NewSeason {
     pub trader_address: Pubkey,
+    pub season_address: Pubkey,
     pub season: u64,
 }
 
@@ -299,7 +300,7 @@ pub struct InitialiazeSeason<'info> {
     pub trader: Signer<'info>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = trader,
         space = 8 + SubscriptionPass::INIT_SPACE,
         seeds = [SubscriptionPass::SEED, DEVELOPER_ADDRESS.to_bytes().as_ref(), trader.key().as_ref(),trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season).to_le_bytes().as_ref()],
@@ -308,7 +309,7 @@ pub struct InitialiazeSeason<'info> {
     pub shingo_pass: Account<'info, SubscriptionPass>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = trader,
         space = 8 + SubscriptionPass::INIT_SPACE,
         seeds = [SubscriptionPass::SEED, trader.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season).to_le_bytes().as_ref()],
@@ -320,7 +321,7 @@ pub struct InitialiazeSeason<'info> {
     pub trader_account: Account<'info, TraderAccount>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = trader,
         space = 8 + Season::INIT_SPACE,
         // has to be on 1 line
@@ -337,7 +338,7 @@ pub struct SubscribeToSeason<'info> {
     pub follower: Signer<'info>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = follower,
         space = 8 + SubscriptionPass::INIT_SPACE,
         seeds = [SubscriptionPass::SEED, follower.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
@@ -356,7 +357,7 @@ pub struct SubscribeToSeason<'info> {
 
     #[account(
         // has to be on 1 line
-        seeds = [trader.key().as_ref(), Season::SEED, trader_account.current_season.to_le_bytes().as_ref()],
+        seeds = [Season::SEED,trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
         bump)]
     pub season: Account<'info, Season>,
 }
@@ -689,8 +690,8 @@ pub mod shingo_program {
     // ########## Season:  close_season
     // ########## Signal ###########
     // ######### Arcium ############
-    // ######### Arcium : encrypt_signal 
-    // ######### Arcium : reveal_signal     
+    // ######### Arcium : encrypt_signal
+    // ######### Arcium : reveal_signal
     // --------------------------------------------------------------
 
     // ########## Trader ###########
@@ -728,6 +729,11 @@ pub mod shingo_program {
             ShingoProgramError::InvalidSubscriptionPrice
         );
 
+        require!(
+            !ctx.accounts.trader_account.has_active_season,
+            ShingoProgramError::Nono
+        );
+
         let trader_account = &mut ctx.accounts.trader_account;
         let season_number = trader_account
             .current_season
@@ -736,6 +742,7 @@ pub mod shingo_program {
 
         trader_account.current_season = season_number;
         trader_account.signal_count = 0;
+        trader_account.has_active_season = true;
 
         let season = &mut ctx.accounts.season;
         season.subscription_price = subscription_price;
@@ -751,6 +758,7 @@ pub mod shingo_program {
 
         emit!(NewSeason {
             trader_address: ctx.accounts.trader.key(),
+            season_address: ctx.accounts.season.key(),
             season: season_number,
         });
 
@@ -813,6 +821,10 @@ pub mod shingo_program {
     /// Called multiple times by the trader, at the end a season
     /// Ending a season makes all its signals decryptable by everyone
     pub fn close_season(ctx: Context<CloseSeason>) -> Result<()> {
+        require!(
+            ctx.accounts.trader_account.has_active_season,
+            ShingoProgramError::Nono
+        );
         let trader_account = &mut ctx.accounts.trader_account;
         trader_account.has_active_season = false;
         trader_account.signal_count = 0;
@@ -1016,7 +1028,6 @@ pub mod shingo_program {
 
     /// # Errors
     /// Errors if ``queue_computation`` fails
-    /// Errors if Casting ``Signal::INIT_SPACE`` to u32 fails
     pub fn reveal_signal(ctx: Context<RevealSignal>, computation_offset: u64) -> Result<()> {
         require!(
             (ctx.accounts.season.id == ctx.accounts.signal.season_id)
