@@ -5,5 +5,5 @@ edition = "2021"
 license = "BUSL-1.1"
 
 [dependencies]
-arcis = "0.6.3"
+arcis = "0.7.0"
 
