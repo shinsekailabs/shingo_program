@@ -30,7 +30,7 @@ security_txt! {
     policy: "https://github.com/solana-labs/solana/blob/master/SECURITY.md",
 
     // Optional Fields
-    preferred_languages: "en,fr,de",
+    preferred_languages: "en,fr",
     source_code: "https://github.com/Neal-C/shingo_program",
     source_release: default_env!("GITHUB_REF_NAME", "main"),
     source_tag: "v0.0.1",
@@ -94,7 +94,7 @@ pub const COMP_DEF_OFFSET_REVEAL_SIGNAL: u32 = comp_def_offset("reveal_signal");
 pub enum ShingoProgramError {
     #[msg("Not Subbed")]
     NotSubbed,
-    #[msg("Nope.")]
+    #[msg("Nope")]
     Nono,
     #[msg("The computation was aborted")]
     AbortedComputation,
@@ -110,6 +110,10 @@ pub enum ShingoProgramError {
     CastingFailure,
     #[msg("Bytemuck failure")]
     BytemuckFailure,
+    #[msg("Cannot create new season while there's an active season. Close current season first")]
+    CannotCreateNewSeasonWhileHasActiveSeason,
+    #[msg("Cannot close a season while there's no active season. Create a season first")]
+    CannotCloseSeasonWhileNoActiveSeason,
 }
 
 #[error_code]
@@ -437,6 +441,15 @@ pub struct InitDecryptSignalCompDef<'info> {
     pub arcium_program: Program<'info, Arcium>,
 
     pub system_program: Program<'info, System>,
+
+    // version 0.7.0 migration : new required accounts
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    /// CHECK: ``address_lookup_table``, checked by arcium program.
+    pub address_lookup_table: UncheckedAccount<'info>,
+
+    #[account(address = LUT_PROGRAM_ID)]
+    /// CHECK: ``lut_program`` is the Address Lookup Table program.
+    pub lut_program: UncheckedAccount<'info>,
 }
 
 #[queue_computation_accounts("decrypt_signal", payer)]
@@ -575,6 +588,15 @@ pub struct InitRevealSignalCompDef<'info> {
     pub arcium_program: Program<'info, Arcium>,
 
     pub system_program: Program<'info, System>,
+
+    // version 0.7.0 migration : new required accounts
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    /// CHECK: ``address_lookup_table``, checked by arcium program.
+    pub address_lookup_table: UncheckedAccount<'info>,
+
+    #[account(address = LUT_PROGRAM_ID)]
+    /// CHECK: ``lut_program`` is the Address Lookup Table program.
+    pub lut_program: UncheckedAccount<'info>,
 }
 
 #[queue_computation_accounts("reveal_signal", payer)]
@@ -731,7 +753,7 @@ pub mod shingo_program {
 
         require!(
             !ctx.accounts.trader_account.has_active_season,
-            ShingoProgramError::Nono
+            ShingoProgramError::CannotCreateNewSeasonWhileHasActiveSeason
         );
 
         let trader_account = &mut ctx.accounts.trader_account;
@@ -823,7 +845,7 @@ pub mod shingo_program {
     pub fn close_season(ctx: Context<CloseSeason>) -> Result<()> {
         require!(
             ctx.accounts.trader_account.has_active_season,
-            ShingoProgramError::Nono
+            ShingoProgramError::CannotCloseSeasonWhileNoActiveSeason
         );
         let trader_account = &mut ctx.accounts.trader_account;
         trader_account.has_active_season = false;
@@ -936,7 +958,6 @@ pub mod shingo_program {
             ctx.accounts,
             computation_offset,
             args,
-            None,
             vec![DecryptSignalCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
@@ -1049,7 +1070,6 @@ pub mod shingo_program {
             ctx.accounts,
             computation_offset,
             args,
-            None,
             vec![RevealSignalCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,

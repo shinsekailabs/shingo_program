@@ -523,6 +523,14 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
         }
       ],
       "args": []
@@ -568,6 +576,14 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
         }
       ],
       "args": []
@@ -1310,7 +1326,7 @@
     {
       "code": 6001,
       "name": "Nono",
-      "msg": "Nope."
+      "msg": "Nope"
     },
     {
       "code": 6002,
@@ -1346,6 +1362,16 @@
       "code": 6008,
       "name": "BytemuckFailure",
       "msg": "Bytemuck failure"
+    },
+    {
+      "code": 6009,
+      "name": "CannotCreateNewSeasonWhileHasActiveSeason",
+      "msg": "Cannot create new season while there's an active season. Close current season first"
+    },
+    {
+      "code": 6010,
+      "name": "CannotCloseSeasonWhileNoActiveSeason",
+      "msg": "Cannot close a season while there's no active season. Create a season first"
     }
   ],
   "types": [
@@ -1888,16 +1914,8 @@
             }
           },
           {
-            "name": "fallback_clusters",
-            "type": {
-              "vec": "u32"
-            }
-          },
-          {
-            "name": "rejected_clusters",
-            "type": {
-              "vec": "u32"
-            }
+            "name": "lut_offset_slot",
+            "type": "u64"
           },
           {
             "name": "computation_definitions",
