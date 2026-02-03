@@ -25,19 +25,19 @@ The Shingo Program is the smart contract powering https://shingo.finance
 Contract address / ProgramID :
 
 ```
-6Dy8fhGJ5Au94QY4xd9QTvccESnK7tG2vh5hRMxD1H5L
+CZABrhMxzGBecfrbw1dnxLi1Q2fajxaZRhWcXvAftQYi
 ```
 
-Explorer link : https://explorer.solana.com/address/6Dy8fhGJ5Au94QY4xd9QTvccESnK7tG2vh5hRMxD1H5L?cluster=devnet
+Explorer link : https://explorer.solana.com/address/CZABrhMxzGBecfrbw1dnxLi1Q2fajxaZRhWcXvAftQYi?cluster=devnet
 
-Orbmarkets link : https://orbmarkets.io/address/6Dy8fhGJ5Au94QY4xd9QTvccESnK7tG2vh5hRMxD1H5L/history?cluster=devnet&hideSpam=true
+Orbmarkets link : https://orbmarkets.io/address/CZABrhMxzGBecfrbw1dnxLi1Q2fajxaZRhWcXvAftQYi/history?cluster=devnet&hideSpam=true
 
-Solscan link : https://solscan.io/account/6Dy8fhGJ5Au94QY4xd9QTvccESnK7tG2vh5hRMxD1H5L?cluster=devnet
+Solscan link : https://solscan.io/account/CZABrhMxzGBecfrbw1dnxLi1Q2fajxaZRhWcXvAftQYi?cluster=devnet
 
 Idl account
 
 ```
-5ZBWp3SG67BVPzrXwLvmPv1Gw2TrtCdAoSCL1h8gajBh
+Esz6wmXu3RjvVPkGv4nDynxtDpR5vd9R8bYErqo6Y9Xn
 ```
 
 All our programs are immutable. If I forgot to make a program immutable, ping me and I'll make it immutable immediately.
