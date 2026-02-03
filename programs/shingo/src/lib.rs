@@ -354,9 +354,6 @@ pub struct SubscribeToSeason<'info> {
     pub trader: SystemAccount<'info>,
 
     #[account(mut)]
-    pub developer: SystemAccount<'info>,
-
-    #[account(mut)]
     pub trader_account: Account<'info, TraderAccount>,
 
     #[account(
@@ -724,6 +721,10 @@ pub mod shingo_program {
     pub fn initialize_trader_account(ctx: Context<InitializeTraderAccount>) -> Result<()> {
         let trader_account = &mut ctx.accounts.trader_account;
 
+        if trader_account.to_account_info().data_len() > 0 {
+            return Ok(());
+        }
+
         trader_account.current_season = 0;
         trader_account.has_active_season = false;
         trader_account.signal_count = 0;
@@ -791,29 +792,7 @@ pub mod shingo_program {
     /// May fail on transfers.
     /// Errors if the followers extending invoke fails
     pub fn subscribe_to_season(ctx: Context<SubscribeToSeason>) -> Result<()> {
-        let developer = &ctx.accounts.developer;
-
-        require!(
-            developer.key().eq(&DEVELOPER_ADDRESS),
-            ShingoProgramError::Nono
-        );
-
         let price = ctx.accounts.season.subscription_price;
-
-        let tip = price
-            .checked_div(100)
-            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
-
-        system_program::transfer(
-            CpiContext::new(
-                ctx.accounts.system_program.to_account_info(),
-                system_program::Transfer {
-                    from: ctx.accounts.follower.to_account_info(),
-                    to: ctx.accounts.developer.to_account_info(),
-                },
-            ),
-            tip,
-        )?;
 
         system_program::transfer(
             CpiContext::new(
