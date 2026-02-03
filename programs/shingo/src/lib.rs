@@ -75,7 +75,7 @@ The following hackers could've stolen all our money but didn't:
 "
 }
 
-declare_id!("BsW6tsgxPVpdCeSwMdmtDiVdkVZspAT7Rd6DyW2o2iTj");
+declare_id!("4zynHkvK3RkdHK6ipRowDDjdwy45B8ufZGxoV27XLUtN");
 
 pub const DEVELOPER_ADDRESS: Pubkey = pubkey!("HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ");
 
@@ -352,6 +352,9 @@ pub struct SubscribeToSeason<'info> {
 
     #[account(mut)]
     pub trader: SystemAccount<'info>,
+
+    #[account(mut)]
+    pub developer: SystemAccount<'info>,
 
     #[account(mut)]
     pub trader_account: Account<'info, TraderAccount>,
@@ -792,7 +795,29 @@ pub mod shingo_program {
     /// May fail on transfers.
     /// Errors if the followers extending invoke fails
     pub fn subscribe_to_season(ctx: Context<SubscribeToSeason>) -> Result<()> {
+        let developer = &ctx.accounts.developer;
+
+        require!(
+            developer.key().eq(&DEVELOPER_ADDRESS),
+            ShingoProgramError::Nono
+        );
+
         let price = ctx.accounts.season.subscription_price;
+
+        let tip = price
+            .checked_div(100)
+            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+
+        system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                system_program::Transfer {
+                    from: ctx.accounts.follower.to_account_info(),
+                    to: ctx.accounts.developer.to_account_info(),
+                },
+            ),
+            tip,
+        )?;
 
         system_program::transfer(
             CpiContext::new(
