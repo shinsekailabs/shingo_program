@@ -25,14 +25,14 @@ The Shingo Program is the smart contract powering https://shingo.finance
 Contract address / ProgramID :
 
 ```
-CZABrhMxzGBecfrbw1dnxLi1Q2fajxaZRhWcXvAftQYi
+3KibrPpGxLE6NpLNbeHwFV7XF4BV6qcpVZEfB7ddw8Ym
 ```
 
-Explorer link : https://explorer.solana.com/address/CZABrhMxzGBecfrbw1dnxLi1Q2fajxaZRhWcXvAftQYi?cluster=devnet
+Explorer link : https://explorer.solana.com/address/3KibrPpGxLE6NpLNbeHwFV7XF4BV6qcpVZEfB7ddw8Ym?cluster=devnet
 
-Orbmarkets link : https://orbmarkets.io/address/CZABrhMxzGBecfrbw1dnxLi1Q2fajxaZRhWcXvAftQYi/history?cluster=devnet&hideSpam=true
+Orbmarkets link : https://orbmarkets.io/address/3KibrPpGxLE6NpLNbeHwFV7XF4BV6qcpVZEfB7ddw8Ym/history?cluster=devnet&hideSpam=true
 
-Solscan link : https://solscan.io/account/CZABrhMxzGBecfrbw1dnxLi1Q2fajxaZRhWcXvAftQYi?cluster=devnet
+Solscan link : https://solscan.io/account/3KibrPpGxLE6NpLNbeHwFV7XF4BV6qcpVZEfB7ddw8Ym?cluster=devnet
 
 Idl account
 
