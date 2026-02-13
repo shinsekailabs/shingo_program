@@ -1067,6 +1067,10 @@
           "writable": true
         },
         {
+          "name": "developer",
+          "writable": true
+        },
+        {
           "name": "trader_account",
           "writable": true
         },

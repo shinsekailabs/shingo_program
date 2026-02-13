@@ -75,7 +75,7 @@ The following hackers could've stolen all our money but didn't:
 "
 }
 
-declare_id!("4zynHkvK3RkdHK6ipRowDDjdwy45B8ufZGxoV27XLUtN");
+declare_id!("BsW6tsgxPVpdCeSwMdmtDiVdkVZspAT7Rd6DyW2o2iTj");
 
 pub const DEVELOPER_ADDRESS: Pubkey = pubkey!("HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ");
 
