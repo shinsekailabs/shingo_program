@@ -8,11 +8,24 @@
 
 The Shingo Program is the smart contract powering https://shingo.finance
 
+### Winner of the Solana Privacy Hackathon "Open Track" ( Winter 2026 ) 
+
+Solana developers' announcement tweet : https://x.com/solana_devs/status/2022385324714856709 
+
+![Winners tweet](./docs/winners_tweet.png) 
+
 ## Using Arcium for decentralized encryption and decryption
 
 ![Arcium](./docs/arcium_concept.png)
 
 ## Here's the mental model of the Program
+
+Imagine Netflix, but instead of shows, you've got traders.
+
+Traders have seasons and their seasons have episodes.
+
+Traders publish trading signals ( i.e stock tips ), and these signals are the episodes of the season.
+
 
 ![Mental model](./docs/shingo_mental_model.png)
 
