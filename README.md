@@ -12,7 +12,7 @@ The Shingo Program is the smart contract powering https://shingo.finance
 
 Solana developers' announcement tweet : https://x.com/solana_devs/status/2022385324714856709 
 
-![Winners tweet](./docs/winners_tweet.png) 
+![Winners tweet](./docs/winner_shingo.png) 
 
 ## Using Arcium for decentralized encryption and decryption
 

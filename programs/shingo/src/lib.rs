@@ -80,7 +80,6 @@ declare_id!("BsW6tsgxPVpdCeSwMdmtDiVdkVZspAT7Rd6DyW2o2iTj");
 pub const DEVELOPER_ADDRESS: Pubkey = pubkey!("HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ");
 
 /// This constant identifies our encrypted instruction for on-chain operations.
-///
 /// ``comp_def_offset()`` generates a unique identifier from the function name
 pub const COMP_DEF_OFFSET_SIGNAL: u32 = comp_def_offset("decrypt_signal");
 
@@ -268,12 +267,13 @@ pub struct NewTrader {
 
 // ##########################################
 // ######### Anchor Contexts     ############
-// - InitialiazeTraderAccount
-// - InitialiazeSeason
+// - InitializeTraderAccount
+// - InitializeSeason
 // - SubscribeToSeason
 // - CloseSeason
 // - EncryptSignal
 // - DecryptSignal
+// - RevealSignal
 // ##########################################
 
 // ############## Trader #######################
@@ -711,8 +711,9 @@ pub mod shingo_program {
     // ########## Season:  subscribe_to_season
     // ########## Season:  close_season
     // ########## Signal ###########
+    // ########## Signal: encrypt_signal
     // ######### Arcium ############
-    // ######### Arcium : encrypt_signal
+    // ######### Arcium : decrypt_signal
     // ######### Arcium : reveal_signal
     // --------------------------------------------------------------
 
@@ -745,7 +746,8 @@ pub mod shingo_program {
     /// Theoritically may have an arithemic error that cause Overflow Error
     /// Called multiple times by the trader, at start of a new season
     /// Errors if ``subscription_price`` is equal to 0
-    /// Errors if the followers extending invoke fails
+    /// Errors if the trader has an active season
+    /// Errors if a Checked Arithmetic addition fails
     pub fn initialize_season(
         ctx: Context<InitialiazeSeason>,
         subscription_price: u64,
@@ -793,7 +795,8 @@ pub mod shingo_program {
 
     /// # Errors
     /// May fail on transfers.
-    /// Errors if the followers extending invoke fails
+    /// Errors if the developer system account given is not the actual developer of the smart contract
+    /// Errors if a Checked Arithmetic division fails
     pub fn subscribe_to_season(ctx: Context<SubscribeToSeason>) -> Result<()> {
         let developer = &ctx.accounts.developer;
 
@@ -846,6 +849,7 @@ pub mod shingo_program {
     /// Theoritically may have an arithemic error that cause Overflow
     /// Called multiple times by the trader, at the end a season
     /// Ending a season makes all its signals decryptable by everyone
+    /// Errors if the trader does not have an active season
     pub fn close_season(ctx: Context<CloseSeason>) -> Result<()> {
         require!(
             ctx.accounts.trader_account.has_active_season,
@@ -871,6 +875,7 @@ pub mod shingo_program {
 
     /// # Errors
     /// Can error on safe arithmetic addition failure
+    /// Can theoritically error if the ``Clock`` cannot be obtained
     #[allow(clippy::too_many_arguments)]
     pub fn encrypt_signal(
         ctx: Context<EncryptSignal>,
@@ -915,7 +920,7 @@ pub mod shingo_program {
         Ok(())
     }
 
-    // ######### Arcium : encrypt_signal ########
+    // ######### Arcium : decrypt_signal ########
 
     /// # Errors
     /// Cannot error, fn just initializes the ``comp_def``
@@ -927,6 +932,8 @@ pub mod shingo_program {
 
     /// # Errors
     /// Errors if ``queue_computation`` fails
+    /// Errors if the signer of the transaction is not subbed to season
+    /// Errors if a casting operation fails
     pub fn decrypt_signal(
         ctx: Context<DecryptSignal>,
         computation_offset: u64,
@@ -974,6 +981,8 @@ pub mod shingo_program {
         Ok(())
     }
 
+    /// # Errors
+    /// Errors if bytemuck fails
     #[arcium_callback(encrypted_ix = "decrypt_signal")]
     pub fn decrypt_signal_callback(
         ctx: Context<DecryptSignalCallback>,
@@ -1053,6 +1062,8 @@ pub mod shingo_program {
 
     /// # Errors
     /// Errors if ``queue_computation`` fails
+    /// Errors if the signal's season is active
+    /// Errors if the signal's season isn't matching the user given season
     pub fn reveal_signal(ctx: Context<RevealSignal>, computation_offset: u64) -> Result<()> {
         require!(
             (ctx.accounts.season.id == ctx.accounts.signal.season_id)
@@ -1086,6 +1097,8 @@ pub mod shingo_program {
         Ok(())
     }
 
+    /// # Errors
+    /// Errors if the computation aborted
     #[arcium_callback(encrypted_ix = "reveal_signal")]
     pub fn reveal_signal_callback(
         ctx: Context<RevealSignalCallback>,
