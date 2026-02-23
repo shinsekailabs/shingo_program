@@ -13,7 +13,8 @@
         "# Errors",
         "Theoritically may have an arithemic error that cause Overflow",
         "Called multiple times by the trader, at the end a season",
-        "Ending a season makes all its signals decryptable by everyone"
+        "Ending a season makes all its signals decryptable by everyone",
+        "Errors if the trader does not have an active season"
       ],
       "discriminator": [
         162,
@@ -73,7 +74,9 @@
       "name": "decrypt_signal",
       "docs": [
         "# Errors",
-        "Errors if ``queue_computation`` fails"
+        "Errors if ``queue_computation`` fails",
+        "Errors if the signer of the transaction is not subbed to season",
+        "Errors if a casting operation fails"
       ],
       "discriminator": [
         106,
@@ -254,6 +257,10 @@
     },
     {
       "name": "decrypt_signal_callback",
+      "docs": [
+        "# Errors",
+        "Errors if bytemuck fails"
+      ],
       "discriminator": [
         27,
         194,
@@ -311,7 +318,8 @@
       "name": "encrypt_signal",
       "docs": [
         "# Errors",
-        "Can error on safe arithmetic addition failure"
+        "Can error on safe arithmetic addition failure",
+        "Can theoritically error if the ``Clock`` cannot be obtained"
       ],
       "discriminator": [
         98,
@@ -595,7 +603,8 @@
         "Theoritically may have an arithemic error that cause Overflow Error",
         "Called multiple times by the trader, at start of a new season",
         "Errors if ``subscription_price`` is equal to 0",
-        "Errors if the followers extending invoke fails"
+        "Errors if the trader has an active season",
+        "Errors if a Checked Arithmetic addition fails"
       ],
       "discriminator": [
         48,
@@ -833,7 +842,9 @@
       "name": "reveal_signal",
       "docs": [
         "# Errors",
-        "Errors if ``queue_computation`` fails"
+        "Errors if ``queue_computation`` fails",
+        "Errors if the signal's season is active",
+        "Errors if the signal's season isn't matching the user given season"
       ],
       "discriminator": [
         224,
@@ -939,6 +950,10 @@
     },
     {
       "name": "reveal_signal_callback",
+      "docs": [
+        "# Errors",
+        "Errors if the computation aborted"
+      ],
       "discriminator": [
         218,
         151,
@@ -997,7 +1012,8 @@
       "docs": [
         "# Errors",
         "May fail on transfers.",
-        "Errors if the followers extending invoke fails"
+        "Errors if the developer system account given is not the actual developer of the smart contract",
+        "Errors if a Checked Arithmetic division fails"
       ],
       "discriminator": [
         207,
@@ -1320,58 +1336,8 @@
   "errors": [
     {
       "code": 6000,
-      "name": "NotSubbed",
-      "msg": "Not Subbed"
-    },
-    {
-      "code": 6001,
-      "name": "Nono",
-      "msg": "Nope"
-    },
-    {
-      "code": 6002,
-      "name": "AbortedComputation",
-      "msg": "The computation was aborted"
-    },
-    {
-      "code": 6003,
-      "name": "SubscriptionFailed",
-      "msg": "subscription failed"
-    },
-    {
-      "code": 6004,
-      "name": "InvalidSubscriptionPrice",
-      "msg": "invalid subscription price"
-    },
-    {
-      "code": 6005,
-      "name": "CheckedArithmeticFailure",
-      "msg": "Checked Arithmetic failure"
-    },
-    {
-      "code": 6006,
-      "name": "LookupTableDeserializationFailure",
-      "msg": "LookupTable Deserialization failure"
-    },
-    {
-      "code": 6007,
-      "name": "CastingFailure",
-      "msg": "Casting failure"
-    },
-    {
-      "code": 6008,
-      "name": "BytemuckFailure",
-      "msg": "Bytemuck failure"
-    },
-    {
-      "code": 6009,
-      "name": "CannotCreateNewSeasonWhileHasActiveSeason",
-      "msg": "Cannot create new season while there's an active season. Close current season first"
-    },
-    {
-      "code": 6010,
-      "name": "CannotCloseSeasonWhileNoActiveSeason",
-      "msg": "Cannot close a season while there's no active season. Create a season first"
+      "name": "ClusterNotSet",
+      "msg": "Cluster not set"
     }
   ],
   "types": [

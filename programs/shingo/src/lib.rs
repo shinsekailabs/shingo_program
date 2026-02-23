@@ -297,7 +297,7 @@ pub struct InitializeTraderAccount<'info> {
 // ################# Season ##################
 
 #[derive(Accounts)]
-pub struct InitialiazeSeason<'info> {
+pub struct InitializeSeason<'info> {
     pub system_program: Program<'info, System>,
 
     #[account(mut)]
@@ -749,7 +749,7 @@ pub mod shingo_program {
     /// Errors if the trader has an active season
     /// Errors if a Checked Arithmetic addition fails
     pub fn initialize_season(
-        ctx: Context<InitialiazeSeason>,
+        ctx: Context<InitializeSeason>,
         subscription_price: u64,
     ) -> Result<()> {
         require!(
