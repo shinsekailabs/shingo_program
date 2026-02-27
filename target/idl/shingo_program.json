@@ -1336,8 +1336,58 @@
   "errors": [
     {
       "code": 6000,
-      "name": "ClusterNotSet",
-      "msg": "Cluster not set"
+      "name": "NotSubbed",
+      "msg": "Not Subbed"
+    },
+    {
+      "code": 6001,
+      "name": "Nono",
+      "msg": "Nope"
+    },
+    {
+      "code": 6002,
+      "name": "AbortedComputation",
+      "msg": "The computation was aborted"
+    },
+    {
+      "code": 6003,
+      "name": "SubscriptionFailed",
+      "msg": "subscription failed"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidSubscriptionPrice",
+      "msg": "invalid subscription price"
+    },
+    {
+      "code": 6005,
+      "name": "CheckedArithmeticFailure",
+      "msg": "Checked Arithmetic failure"
+    },
+    {
+      "code": 6006,
+      "name": "LookupTableDeserializationFailure",
+      "msg": "LookupTable Deserialization failure"
+    },
+    {
+      "code": 6007,
+      "name": "CastingFailure",
+      "msg": "Casting failure"
+    },
+    {
+      "code": 6008,
+      "name": "BytemuckFailure",
+      "msg": "Bytemuck failure"
+    },
+    {
+      "code": 6009,
+      "name": "CannotCreateNewSeasonWhileHasActiveSeason",
+      "msg": "Cannot create new season while there's an active season. Close current season first"
+    },
+    {
+      "code": 6010,
+      "name": "CannotCloseSeasonWhileNoActiveSeason",
+      "msg": "Cannot close a season while there's no active season. Create a season first"
     }
   ],
   "types": [
