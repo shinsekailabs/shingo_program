@@ -75,7 +75,7 @@ The following hackers could've stolen all our money but didn't:
 "
 }
 
-declare_id!("BsW6tsgxPVpdCeSwMdmtDiVdkVZspAT7Rd6DyW2o2iTj");
+declare_id!("4zynHkvK3RkdHK6ipRowDDjdwy45B8ufZGxoV27XLUtN");
 
 pub const DEVELOPER_ADDRESS: Pubkey = pubkey!("HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ");
 
@@ -144,8 +144,6 @@ pub struct Entry {
 #[account]
 #[derive(InitSpace)]
 pub struct Signal {
-    pub version: u8,
-    pub id: [u8; 16],
     pub market: [[u8; 32]; 2],
     pub side: [u8; 32],
     pub entry: [[u8; 32]; 2],
@@ -204,8 +202,6 @@ impl SubscriptionPass {
 #[event]
 pub struct ObservableSignal {
     pub nonce: [u8; 16],
-    pub version: [u8; 32],
-    pub id: [u8; 32],
     pub market: [[u8; 32]; 2],
     pub side: [u8; 32],
     pub entry: [[u8; 32]; 2],
@@ -222,8 +218,6 @@ pub struct ObservableSignal {
 
 #[event]
 pub struct ClearSignal {
-    pub version: u8,
-    pub id: [u8; 16],
     pub market: Market,
     /// LONG = 0 | SHORT = 1
     pub side: u8,
@@ -377,6 +371,7 @@ pub struct CloseSeason<'info> {
     pub trader_account: Account<'info, TraderAccount>,
 
     #[account(
+        mut,
         // has to be on 1 line
         seeds = [Season::SEED, trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
         bump)]
@@ -392,6 +387,7 @@ pub struct EncryptSignal<'info> {
     #[account(mut)]
     pub trader: Signer<'info>,
 
+    #[account(mut)]
     pub season: Account<'info, Season>,
 
     #[account(
@@ -456,14 +452,14 @@ pub struct InitDecryptSignalCompDef<'info> {
 #[derive(Accounts)]
 #[instruction(computation_offset: u64)]
 pub struct DecryptSignal<'info> {
-    pub season: Account<'info, Season>,
+    pub season: Box<Account<'info, Season>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
 
     pub trader: SystemAccount<'info>,
 
-    pub trader_account: Account<'info, TraderAccount>,
+    pub trader_account: Box<Account<'info, TraderAccount>>,
 
     #[account(
         init_if_needed,
@@ -472,9 +468,9 @@ pub struct DecryptSignal<'info> {
         seeds = [SubscriptionPass::SEED, payer.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
         bump
     )]
-    pub follower_pass: Account<'info, SubscriptionPass>,
+    pub follower_pass: Box<Account<'info, SubscriptionPass>>,
 
-    pub signal: Account<'info, Signal>,
+    pub signal: Box<Account<'info, Signal>>,
 
     #[account(
     init_if_needed,
@@ -484,10 +480,10 @@ pub struct DecryptSignal<'info> {
     bump,
     address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
 
     #[account(address = derive_mxe_pda!())]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
 
     #[account(
         mut,
@@ -513,25 +509,25 @@ pub struct DecryptSignal<'info> {
     #[account(
         address = derive_comp_def_pda!(COMP_DEF_OFFSET_SIGNAL)
     )]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
     #[account(
         mut,
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
 
     #[account(
         mut,
         address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS,
     )]
-    pub pool_account: Account<'info, FeePool>,
+    pub pool_account: Box<Account<'info, FeePool>>,
 
     #[account(
         mut,
         address = ARCIUM_CLOCK_ACCOUNT_ADDRESS,
     )]
-    pub clock_account: Account<'info, ClockAccount>,
+    pub clock_account: Box<Account<'info, ClockAccount>>,
 
     pub system_program: Program<'info, System>,
 
@@ -546,12 +542,12 @@ pub struct DecryptSignalCallback<'info> {
     #[account(
         address = derive_comp_def_pda!(COMP_DEF_OFFSET_SIGNAL)
     )]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
     #[account(
         address = derive_mxe_pda!()
     )]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
 
     /// CHECK: ``computation_account``, checked by arcium program via constraints in the callback context.
     pub computation_account: UncheckedAccount<'info>,
@@ -559,7 +555,7 @@ pub struct DecryptSignalCallback<'info> {
     #[account(
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
 
     #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
     /// CHECK: ``instructions_sysvar``, checked by the account constraint
@@ -603,9 +599,9 @@ pub struct InitRevealSignalCompDef<'info> {
 #[derive(Accounts)]
 #[instruction(computation_offset: u64)]
 pub struct RevealSignal<'info> {
-    pub season: Account<'info, Season>,
+    pub season: Box<Account<'info, Season>>,
 
-    pub signal: Account<'info, Signal>,
+    pub signal: Box<Account<'info, Signal>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -618,49 +614,57 @@ pub struct RevealSignal<'info> {
     bump,
     address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
 
     #[account(
         address = derive_mxe_pda!()
     )]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
+
     #[account(
         mut,
         address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
     /// CHECK: ``mempool_account``, checked by the arcium program
     pub mempool_account: UncheckedAccount<'info>,
+
     #[account(
         mut,
         address = derive_execpool_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
     /// CHECK: ``executing_pool``, checked by the arcium program
     pub executing_pool: UncheckedAccount<'info>,
+
     #[account(
         mut,
         address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet)
     )]
     /// CHECK: ``computation_account``, checked by the arcium program.
     pub computation_account: UncheckedAccount<'info>,
+
     #[account(
         address = derive_comp_def_pda!(COMP_DEF_OFFSET_REVEAL_SIGNAL)
     )]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
+
     #[account(
         mut,
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
+
     #[account(
         mut,
         address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS,
     )]
-    pub pool_account: Account<'info, FeePool>,
+    pub pool_account: Box<Account<'info, FeePool>>,
+
     #[account(
         mut,
         address = ARCIUM_CLOCK_ACCOUNT_ADDRESS,
     )]
-    pub clock_account: Account<'info, ClockAccount>,
+    pub clock_account: Box<Account<'info, ClockAccount>>,
+
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,
 }
@@ -673,12 +677,12 @@ pub struct RevealSignalCallback<'info> {
     #[account(
         address = derive_comp_def_pda!(COMP_DEF_OFFSET_REVEAL_SIGNAL)
     )]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
     #[account(
         address = derive_mxe_pda!()
     )]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
 
     /// CHECK: ``computation_account``, checked by arcium program via constraints in the callback context.
     pub computation_account: UncheckedAccount<'info>,
@@ -686,7 +690,7 @@ pub struct RevealSignalCallback<'info> {
     #[account(
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
 
     #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
     /// CHECK: ``instructions_sysvar``, checked by the account constraint
@@ -724,10 +728,6 @@ pub mod shingo_program {
     /// Called Once by the trader
     pub fn initialize_trader_account(ctx: Context<InitializeTraderAccount>) -> Result<()> {
         let trader_account = &mut ctx.accounts.trader_account;
-
-        if trader_account.to_account_info().data_len() > 0 {
-            return Ok(());
-        }
 
         trader_account.current_season = 0;
         trader_account.has_active_season = false;
@@ -879,8 +879,6 @@ pub mod shingo_program {
     #[allow(clippy::too_many_arguments)]
     pub fn encrypt_signal(
         ctx: Context<EncryptSignal>,
-        version: u8,
-        id: [u8; 16],
         market: [[u8; 32]; 2],
         side: [u8; 32],
         entry: [[u8; 32]; 2],
@@ -893,8 +891,6 @@ pub mod shingo_program {
     ) -> Result<()> {
         let signal = &mut ctx.accounts.signal;
 
-        signal.version = version;
-        signal.id = id;
         signal.market = market;
         signal.side = side;
         signal.entry = entry;
@@ -995,44 +991,38 @@ pub mod shingo_program {
             return Err(ShingoProgramError::AbortedComputation.into());
         };
 
-        let version = my_output.ciphertexts[0];
-
-        let id = my_output.ciphertexts[1];
-
         let market = {
-            let market = &my_output.ciphertexts[2..4];
+            let market = &my_output.ciphertexts[0..2];
             let market = to_market(market).ok_or(ShingoProgramError::BytemuckFailure)?;
             market
         };
 
-        let side = my_output.ciphertexts[4];
+        let side = my_output.ciphertexts[2];
 
         let entry =
-            to_entry(&my_output.ciphertexts[5..7]).ok_or(ShingoProgramError::BytemuckFailure)?;
+            to_entry(&my_output.ciphertexts[3..5]).ok_or(ShingoProgramError::BytemuckFailure)?;
 
-        let stop_loss = my_output.ciphertexts[7];
+        let stop_loss = my_output.ciphertexts[5];
 
-        let profit_points = to_profit_points(&my_output.ciphertexts[8..10])
+        let profit_points = to_profit_points(&my_output.ciphertexts[6..8])
             .ok_or(ShingoProgramError::BytemuckFailure)?;
 
-        let size_usd = my_output.ciphertexts[10];
+        let size_usd = my_output.ciphertexts[8];
 
-        let leverage = my_output.ciphertexts[11];
+        let leverage = my_output.ciphertexts[9];
 
-        let venue = my_output.ciphertexts[12];
+        let venue = my_output.ciphertexts[10];
 
-        let timeframe = my_output.ciphertexts[13];
+        let timeframe = my_output.ciphertexts[11];
 
-        let season_id = my_output.ciphertexts[14];
+        let season_id = my_output.ciphertexts[12];
 
-        let created_at = my_output.ciphertexts[15];
+        let created_at = my_output.ciphertexts[13];
 
-        let number = my_output.ciphertexts[16];
+        let number = my_output.ciphertexts[14];
 
         emit!(ObservableSignal {
             nonce: my_output.nonce.to_le_bytes(),
-            version,
-            id,
             market,
             side,
             entry,
@@ -1112,29 +1102,27 @@ pub mod shingo_program {
         };
 
         emit!(ClearSignal {
-            version: my_output.field_0,
-            id: my_output.field_1,
             market: Market {
-                left: my_output.field_2.field_0,
-                right: my_output.field_2.field_1
+                left: my_output.field_0.field_0,
+                right: my_output.field_0.field_1
             },
-            side: my_output.field_3,
+            side: my_output.field_1,
             entry: Entry {
-                kind: my_output.field_4.field_0,
-                price: my_output.field_4.field_1
+                kind: my_output.field_2.field_0,
+                price: my_output.field_2.field_1
             },
-            stop_loss: my_output.field_5,
+            stop_loss: my_output.field_3,
             profit_points: ProfitPoint {
-                price: my_output.field_6.field_0,
-                size_pourcentage: my_output.field_6.field_1
+                price: my_output.field_4.field_0,
+                size_pourcentage: my_output.field_4.field_1
             },
-            size_usd: my_output.field_7,
-            leverage: my_output.field_8,
-            venue: my_output.field_9,
-            timeframe: my_output.field_10,
-            season_id: my_output.field_11,
-            created_at: my_output.field_12,
-            number: my_output.field_13
+            size_usd: my_output.field_5,
+            leverage: my_output.field_6,
+            venue: my_output.field_7,
+            timeframe: my_output.field_8,
+            season_id: my_output.field_9,
+            created_at: my_output.field_10,
+            number: my_output.field_11
         });
 
         Ok(())

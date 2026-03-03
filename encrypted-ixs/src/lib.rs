@@ -20,8 +20,6 @@ mod circuits {
     }
 
     pub struct Signal {
-        pub version: u8,
-        pub id: [u8; 16],
         pub market: Market,
         /// LONG = 0 | SHORT = 1
         pub side: u8,
