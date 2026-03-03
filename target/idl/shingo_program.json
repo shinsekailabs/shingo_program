@@ -42,6 +42,7 @@
         },
         {
           "name": "season",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -342,7 +343,8 @@
           "signer": true
         },
         {
-          "name": "season"
+          "name": "season",
+          "writable": true
         },
         {
           "name": "signal",
@@ -379,19 +381,6 @@
         }
       ],
       "args": [
-        {
-          "name": "version",
-          "type": "u8"
-        },
-        {
-          "name": "id",
-          "type": {
-            "array": [
-              "u8",
-              16
-            ]
-          }
-        },
         {
           "name": "market",
           "type": {
@@ -1485,19 +1474,6 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "id",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
-          {
             "name": "market",
             "type": {
               "defined": {
@@ -1813,7 +1789,7 @@
                 "generics": [
                   {
                     "kind": "const",
-                    "value": "62"
+                    "value": "45"
                   }
                 ]
               }
@@ -2119,24 +2095,6 @@
               "array": [
                 "u8",
                 16
-              ]
-            }
-          },
-          {
-            "name": "version",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "id",
-            "type": {
-              "array": [
-                "u8",
-                32
               ]
             }
           },
@@ -2467,16 +2425,15 @@
         "fields": [
           {
             "name": "field_0",
-            "type": "u8"
+            "type": {
+              "defined": {
+                "name": "RevealSignalOutputStruct00"
+              }
+            }
           },
           {
             "name": "field_1",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
+            "type": "u8"
           },
           {
             "name": "field_2",
@@ -2488,7 +2445,7 @@
           },
           {
             "name": "field_3",
-            "type": "u8"
+            "type": "u64"
           },
           {
             "name": "field_4",
@@ -2504,15 +2461,11 @@
           },
           {
             "name": "field_6",
-            "type": {
-              "defined": {
-                "name": "RevealSignalOutputStruct06"
-              }
-            }
+            "type": "u64"
           },
           {
             "name": "field_7",
-            "type": "u64"
+            "type": "u8"
           },
           {
             "name": "field_8",
@@ -2520,23 +2473,41 @@
           },
           {
             "name": "field_9",
-            "type": "u8"
+            "type": "u64"
           },
           {
             "name": "field_10",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "field_11",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RevealSignalOutputStruct00",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
           },
           {
-            "name": "field_12",
-            "type": "i64"
-          },
-          {
-            "name": "field_13",
-            "type": "u64"
+            "name": "field_1",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
           }
         ]
       }
@@ -2548,32 +2519,6 @@
         "fields": [
           {
             "name": "field_0",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
-          {
-            "name": "field_1",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSignalOutputStruct04",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
             "type": "u8"
           },
           {
@@ -2584,7 +2529,7 @@
       }
     },
     {
-      "name": "RevealSignalOutputStruct06",
+      "name": "RevealSignalOutputStruct04",
       "type": {
         "kind": "struct",
         "fields": [
@@ -2730,19 +2675,6 @@
       "type": {
         "kind": "struct",
         "fields": [
-          {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "id",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
           {
             "name": "market",
             "type": {
