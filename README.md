@@ -38,14 +38,14 @@ Traders publish trading signals ( i.e stock tips ), and these signals are the ep
 Contract address / ProgramID :
 
 ```
-5LJQC6nPSXCcbdqtAKCHnhp8JTQS4pLhpgrjcknbPdDB
+B2cgF9xmLxPjGcDU6QmppaU1pjR7VbHN7xDrwWHb7TDH
 ```
 
-Explorer link : https://explorer.solana.com/address/5LJQC6nPSXCcbdqtAKCHnhp8JTQS4pLhpgrjcknbPdDB?cluster=devnet
+Explorer link : https://explorer.solana.com/address/B2cgF9xmLxPjGcDU6QmppaU1pjR7VbHN7xDrwWHb7TDH?cluster=devnet
 
-Orbmarkets link : https://orbmarkets.io/address/5LJQC6nPSXCcbdqtAKCHnhp8JTQS4pLhpgrjcknbPdDB/history?cluster=devnet&hideSpam=true
+Orbmarkets link : https://orbmarkets.io/address/B2cgF9xmLxPjGcDU6QmppaU1pjR7VbHN7xDrwWHb7TDH/history?cluster=devnet&hideSpam=true
 
-Solscan link : https://solscan.io/account/5LJQC6nPSXCcbdqtAKCHnhp8JTQS4pLhpgrjcknbPdDB?cluster=devnet
+Solscan link : https://solscan.io/account/B2cgF9xmLxPjGcDU6QmppaU1pjR7VbHN7xDrwWHb7TDH?cluster=devnet
 
 Idl account
 
