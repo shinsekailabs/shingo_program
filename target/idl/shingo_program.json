@@ -94,7 +94,7 @@
           "name": "season"
         },
         {
-          "name": "payer",
+          "name": "follower",
           "writable": true,
           "signer": true
         },
@@ -106,7 +106,6 @@
         },
         {
           "name": "follower_pass",
-          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -133,7 +132,7 @@
               },
               {
                 "kind": "account",
-                "path": "payer"
+                "path": "follower"
               },
               {
                 "kind": "account",

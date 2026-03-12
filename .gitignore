@@ -8,8 +8,9 @@ test-ledger
 .yarn
 !target/idl
 !target/idl/*
-*/build/
-build
+build/**/*
+!build/*.arcis
+!build/*.json
 
 **/dist
 **/dist-ssr

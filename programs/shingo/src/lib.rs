@@ -31,7 +31,7 @@ security_txt! {
 
     // Optional Fields
     preferred_languages: "en,fr",
-    source_code: "https://github.com/Neal-C/shingo_program",
+    source_code: "https://github.com/shinsekailabs/shingo_program",
     source_release: default_env!("GITHUB_REF_NAME", "main"),
     source_tag: "v0.0.1",
     encryption: "
@@ -81,7 +81,7 @@ pub const DEVELOPER_ADDRESS: Pubkey = pubkey!("HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS3
 
 /// This constant identifies our encrypted instruction for on-chain operations.
 /// ``comp_def_offset()`` generates a unique identifier from the function name
-pub const COMP_DEF_OFFSET_SIGNAL: u32 = comp_def_offset("decrypt_signal");
+pub const COMP_DEF_OFFSET_DECRYPT_SIGNAL: u32 = comp_def_offset("decrypt_signal");
 
 /// This constant identifies our encrypted instruction for on-chain operations.
 /// ``comp_def_offset()`` generates a unique identifier from the function name
@@ -448,24 +448,21 @@ pub struct InitDecryptSignalCompDef<'info> {
     pub lut_program: UncheckedAccount<'info>,
 }
 
-#[queue_computation_accounts("decrypt_signal", payer)]
+#[queue_computation_accounts("decrypt_signal", follower)]
 #[derive(Accounts)]
 #[instruction(computation_offset: u64)]
 pub struct DecryptSignal<'info> {
     pub season: Box<Account<'info, Season>>,
 
     #[account(mut)]
-    pub payer: Signer<'info>,
+    pub follower: Signer<'info>,
 
     pub trader: SystemAccount<'info>,
 
     pub trader_account: Box<Account<'info, TraderAccount>>,
 
     #[account(
-        init_if_needed,
-        payer = payer,
-        space = 8 + SubscriptionPass::INIT_SPACE,
-        seeds = [SubscriptionPass::SEED, payer.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
+        seeds = [SubscriptionPass::SEED, follower.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
         bump
     )]
     pub follower_pass: Box<Account<'info, SubscriptionPass>>,
@@ -474,7 +471,7 @@ pub struct DecryptSignal<'info> {
 
     #[account(
     init_if_needed,
-    payer = payer,
+    payer = follower,
     space = 8 + 1,
     seeds = [b"ArciumSignerAccount"],
     bump,
@@ -507,7 +504,7 @@ pub struct DecryptSignal<'info> {
     pub computation_account: UncheckedAccount<'info>,
 
     #[account(
-        address = derive_comp_def_pda!(COMP_DEF_OFFSET_SIGNAL)
+        address = derive_comp_def_pda!(COMP_DEF_OFFSET_DECRYPT_SIGNAL)
     )]
     pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
@@ -540,7 +537,7 @@ pub struct DecryptSignalCallback<'info> {
     pub arcium_program: Program<'info, Arcium>,
 
     #[account(
-        address = derive_comp_def_pda!(COMP_DEF_OFFSET_SIGNAL)
+        address = derive_comp_def_pda!(COMP_DEF_OFFSET_DECRYPT_SIGNAL)
     )]
     pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
@@ -703,6 +700,9 @@ pub struct RevealSignalCallback<'info> {
 
 #[arcium_program]
 pub mod shingo_program {
+
+    use arcium_client::idl::arcium::types::{CircuitSource, OffChainCircuitSource};
+    use arcium_macros::circuit_hash;
 
     #[allow(clippy::wildcard_imports)]
     use super::*;
@@ -922,7 +922,16 @@ pub mod shingo_program {
     /// Cannot error, fn just initializes the ``comp_def``
     /// Called once by the admin
     pub fn init_decrypt_signal_comp_def(ctx: Context<InitDecryptSignalCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source:
+                    "https://raw.githubusercontent.com/shinsekailabs/shingo_program/build/decrypt_signal.arcis"
+                        .to_string(),
+                hash: circuit_hash!("decrypt_signal"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
@@ -943,7 +952,7 @@ pub mod shingo_program {
         let owner = follower_pass.owner;
 
         require!(
-            owner.eq(ctx.accounts.payer.key),
+            owner.eq(ctx.accounts.follower.key),
             ShingoProgramError::NotSubbed
         );
         // --------------------------------------
@@ -1046,7 +1055,15 @@ pub mod shingo_program {
     /// Cannot fail
     /// Called once by the admin
     pub fn init_reveal_signal_comp_def(ctx: Context<InitRevealSignalCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://raw.githubusercontent.com/shinsekailabs/shingo_program/build/reveal_signal.arcis"
+                    .to_string(),
+                hash: circuit_hash!("reveal_signal"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
