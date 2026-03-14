@@ -926,7 +926,7 @@ pub mod shingo_program {
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
                 source:
-                    "https://raw.githubusercontent.com/shinsekailabs/shingo_program/build/decrypt_signal.arcis"
+                    "https://raw.githubusercontent.com/shinsekailabs/shingo_program/main/build/decrypt_signal.arcis"
                         .to_string(),
                 hash: circuit_hash!("decrypt_signal"),
             })),
@@ -1058,7 +1058,7 @@ pub mod shingo_program {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://raw.githubusercontent.com/shinsekailabs/shingo_program/build/reveal_signal.arcis"
+                source: "https://raw.githubusercontent.com/shinsekailabs/shingo_program/build/main/reveal_signal.arcis"
                     .to_string(),
                 hash: circuit_hash!("reveal_signal"),
             })),
