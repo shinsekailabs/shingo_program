@@ -30,9 +30,6 @@ mod circuits {
         pub leverage: u64,
         pub venue: u8,
         pub timeframe: u64,
-        pub season_id: u64,
-        pub created_at: i64,
-        pub number: u64,
     }
 
     #[instruction]

@@ -1522,18 +1522,6 @@
           {
             "name": "timeframe",
             "type": "u64"
-          },
-          {
-            "name": "season_id",
-            "type": "u64"
-          },
-          {
-            "name": "created_at",
-            "type": "i64"
-          },
-          {
-            "name": "number",
-            "type": "u64"
           }
         ]
       }
@@ -1788,7 +1776,7 @@
                 "generics": [
                   {
                     "kind": "const",
-                    "value": "45"
+                    "value": "42"
                   }
                 ]
               }
@@ -2468,18 +2456,6 @@
           },
           {
             "name": "field_8",
-            "type": "u64"
-          },
-          {
-            "name": "field_9",
-            "type": "u64"
-          },
-          {
-            "name": "field_10",
-            "type": "i64"
-          },
-          {
-            "name": "field_11",
             "type": "u64"
           }
         ]

@@ -228,9 +228,6 @@ pub struct ClearSignal {
     pub leverage: u64,
     pub venue: u8,
     pub timeframe: u64,
-    pub season_id: u64,
-    pub created_at: i64,
-    pub number: u64,
 }
 
 #[event]
@@ -1137,9 +1134,6 @@ pub mod shingo_program {
             leverage: my_output.field_6,
             venue: my_output.field_7,
             timeframe: my_output.field_8,
-            season_id: my_output.field_9,
-            created_at: my_output.field_10,
-            number: my_output.field_11
         });
 
         Ok(())
