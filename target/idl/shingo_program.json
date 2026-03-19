@@ -150,6 +150,9 @@
           "name": "signal"
         },
         {
+          "name": "signal_metadata"
+        },
+        {
           "name": "sign_pda_account",
           "writable": true,
           "pda": {
@@ -377,6 +380,48 @@
               }
             ]
           }
+        },
+        {
+          "name": "signal_metadata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  105,
+                  103,
+                  110,
+                  97,
+                  108,
+                  95,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              },
+              {
+                "kind": "account",
+                "path": "season.id",
+                "account": "Season"
+              },
+              {
+                "kind": "account",
+                "path": "season.count",
+                "account": "Season"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -469,6 +514,15 @@
         },
         {
           "name": "timeframe",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "signal_metadata_pubkey",
           "type": {
             "array": [
               "u8",
@@ -852,6 +906,9 @@
           "name": "signal"
         },
         {
+          "name": "signal_metadata"
+        },
+        {
           "name": "payer",
           "writable": true,
           "signer": true
@@ -1215,6 +1272,19 @@
       ]
     },
     {
+      "name": "SignalMetaData",
+      "discriminator": [
+        53,
+        196,
+        153,
+        95,
+        24,
+        186,
+        217,
+        231
+      ]
+    },
+    {
       "name": "SubscriptionPass",
       "discriminator": [
         126,
@@ -1522,6 +1592,10 @@
           {
             "name": "timeframe",
             "type": "u64"
+          },
+          {
+            "name": "metadata_pubkey",
+            "type": "pubkey"
           }
         ]
       }
@@ -1776,7 +1850,7 @@
                 "generics": [
                   {
                     "kind": "const",
-                    "value": "42"
+                    "value": "74"
                   }
                 ]
               }
@@ -2182,25 +2256,7 @@
             }
           },
           {
-            "name": "season_id",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "created_at",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "number",
+            "name": "metadata_pubkey",
             "type": {
               "array": [
                 "u8",
@@ -2457,6 +2513,15 @@
           {
             "name": "field_8",
             "type": "u64"
+          },
+          {
+            "name": "field_9",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
           }
         ]
       }
@@ -2747,7 +2812,28 @@
             }
           },
           {
+            "name": "metadata_pubkey",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SignalMetaData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
             "name": "season_id",
+            "type": "u64"
+          },
+          {
+            "name": "number",
             "type": "u64"
           },
           {
@@ -2755,8 +2841,12 @@
             "type": "i64"
           },
           {
-            "name": "number",
-            "type": "u64"
+            "name": "signal_pubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "author",
+            "type": "pubkey"
           }
         ]
       }

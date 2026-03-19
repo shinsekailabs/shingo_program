@@ -153,13 +153,25 @@ pub struct Signal {
     pub leverage: [u8; 32],
     pub venue: [u8; 32],
     pub timeframe: [u8; 32],
-    pub season_id: u64,
-    pub created_at: i64,
-    pub number: u64,
+    pub metadata_pubkey: [u8; 32],
 }
 
 impl Signal {
     pub const SEED: &'static [u8; 6] = b"signal";
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct SignalMetaData {
+    pub season_id: u64,
+    pub number: u64,
+    pub created_at: i64,
+    pub signal_pubkey: Pubkey,
+    pub author: Pubkey,
+}
+
+impl SignalMetaData {
+    pub const SEED: &'static [u8; 15] = b"signal_metadata";
 }
 
 #[account]
@@ -211,9 +223,7 @@ pub struct ObservableSignal {
     pub leverage: [u8; 32],
     pub venue: [u8; 32],
     pub timeframe: [u8; 32],
-    pub season_id: [u8; 32],
-    pub created_at: [u8; 32],
-    pub number: [u8; 32],
+    pub metadata_pubkey: [u8; 32],
 }
 
 #[event]
@@ -228,6 +238,7 @@ pub struct ClearSignal {
     pub leverage: u64,
     pub venue: u8,
     pub timeframe: u64,
+    pub metadata_pubkey: Pubkey,
 }
 
 #[event]
@@ -391,9 +402,17 @@ pub struct EncryptSignal<'info> {
         init_if_needed,
         payer = trader,
         space = 8 + Signal::INIT_SPACE,
-        // has to be on 1 lineđ
+        // has to be on 1 line
         seeds = [Signal::SEED, trader.key().as_ref(), season.id.to_le_bytes().as_ref(), season.count.to_le_bytes().as_ref()], bump)]
     pub signal: Account<'info, Signal>,
+
+    #[account(
+        init_if_needed,
+        payer = trader,
+        space = 8 + SignalMetaData::INIT_SPACE,
+        // has to be on 1 line
+        seeds = [SignalMetaData::SEED, trader.key().as_ref(), season.id.to_le_bytes().as_ref(), season.count.to_le_bytes().as_ref()], bump)]
+    pub signal_metadata: Account<'info, SignalMetaData>,
 }
 
 // #################################################
@@ -465,6 +484,8 @@ pub struct DecryptSignal<'info> {
     pub follower_pass: Box<Account<'info, SubscriptionPass>>,
 
     pub signal: Box<Account<'info, Signal>>,
+
+    pub signal_metadata: Box<Account<'info, SignalMetaData>>,
 
     #[account(
     init_if_needed,
@@ -596,6 +617,8 @@ pub struct RevealSignal<'info> {
     pub season: Box<Account<'info, Season>>,
 
     pub signal: Box<Account<'info, Signal>>,
+
+    pub signal_metadata: Box<Account<'info, SignalMetaData>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -885,6 +908,7 @@ pub mod shingo_program {
         leverage: [u8; 32],
         venue: [u8; 32],
         timeframe: [u8; 32],
+        signal_metadata_pubkey: [u8; 32],
     ) -> Result<()> {
         let signal = &mut ctx.accounts.signal;
 
@@ -897,9 +921,15 @@ pub mod shingo_program {
         signal.leverage = leverage;
         signal.venue = venue;
         signal.timeframe = timeframe;
-        signal.season_id = ctx.accounts.season.id;
-        signal.created_at = Clock::get()?.unix_timestamp;
-        signal.number = ctx.accounts.season.count;
+        signal.metadata_pubkey = signal_metadata_pubkey;
+
+        let signal_metadata = &mut ctx.accounts.signal_metadata;
+
+        signal_metadata.season_id = ctx.accounts.season.id;
+        signal_metadata.created_at = Clock::get()?.unix_timestamp;
+        signal_metadata.number = ctx.accounts.season.count;
+        signal_metadata.signal_pubkey = signal.key();
+        signal_metadata.author = ctx.accounts.trader.key();
 
         let season = &mut ctx.accounts.season;
 
@@ -962,7 +992,7 @@ pub mod shingo_program {
             .plaintext_u128(receiver_nonce)
             .x25519_pubkey(sender_pub_key)
             .plaintext_u128(nonce)
-            .account(ctx.accounts.signal.key(), 8, init_space)
+            .account(ctx.accounts.signal_metadata.signal_pubkey, 8, init_space)
             .build();
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
@@ -1021,11 +1051,7 @@ pub mod shingo_program {
 
         let timeframe = my_output.ciphertexts[11];
 
-        let season_id = my_output.ciphertexts[12];
-
-        let created_at = my_output.ciphertexts[13];
-
-        let number = my_output.ciphertexts[14];
+        let metadata_pubkey = my_output.ciphertexts[12];
 
         emit!(ObservableSignal {
             nonce: my_output.nonce.to_le_bytes(),
@@ -1038,9 +1064,7 @@ pub mod shingo_program {
             leverage,
             venue,
             timeframe,
-            season_id,
-            created_at,
-            number,
+            metadata_pubkey,
         });
 
         Ok(())
@@ -1070,7 +1094,7 @@ pub mod shingo_program {
     /// Errors if the signal's season isn't matching the user given season
     pub fn reveal_signal(ctx: Context<RevealSignal>, computation_offset: u64) -> Result<()> {
         require!(
-            (ctx.accounts.season.id == ctx.accounts.signal.season_id)
+            (ctx.accounts.season.id == ctx.accounts.signal_metadata.season_id)
                 && !ctx.accounts.season.is_active,
             ShingoProgramError::Nono
         );
@@ -1080,7 +1104,7 @@ pub mod shingo_program {
             .map_err(|_| ShingoProgramError::CastingFailure)?;
 
         let args = ArgBuilder::new()
-            .account(ctx.accounts.signal.key(), 8, init_space)
+            .account(ctx.accounts.signal_metadata.signal_pubkey, 8, init_space)
             .build();
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
@@ -1134,6 +1158,7 @@ pub mod shingo_program {
             leverage: my_output.field_6,
             venue: my_output.field_7,
             timeframe: my_output.field_8,
+            metadata_pubkey: my_output.field_9.into(),
         });
 
         Ok(())

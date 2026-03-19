@@ -30,6 +30,7 @@ mod circuits {
         pub leverage: u64,
         pub venue: u8,
         pub timeframe: u64,
+        pub metadata_pubkey: [u8; 32],
     }
 
     #[instruction]
