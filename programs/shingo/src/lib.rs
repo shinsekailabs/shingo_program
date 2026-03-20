@@ -75,7 +75,7 @@ The following hackers could've stolen all our money but didn't:
 "
 }
 
-declare_id!("BsW6tsgxPVpdCeSwMdmtDiVdkVZspAT7Rd6DyW2o2iTj");
+declare_id!("HMGBKT1i1pJsaoQqcHXQGVb8FAbg8taPSCbKVLhnDTyY");
 
 pub const DEVELOPER_ADDRESS: Pubkey = pubkey!("HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ");
 
@@ -992,7 +992,7 @@ pub mod shingo_program {
             .plaintext_u128(receiver_nonce)
             .x25519_pubkey(sender_pub_key)
             .plaintext_u128(nonce)
-            .account(ctx.accounts.signal_metadata.signal_pubkey, 8, init_space)
+            .account(ctx.accounts.signal.key(), 8, init_space)
             .build();
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
@@ -1104,7 +1104,7 @@ pub mod shingo_program {
             .map_err(|_| ShingoProgramError::CastingFailure)?;
 
         let args = ArgBuilder::new()
-            .account(ctx.accounts.signal_metadata.signal_pubkey, 8, init_space)
+            .account(ctx.accounts.signal.key(), 8, init_space)
             .build();
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
