@@ -22,16 +22,3 @@ test = "pnpm vitest --run programs/*.{spec,test}.ts"
 startup_wait = 5000
 shutdown_wait = 2000
 upgradeable = false
-
-[[test.genesis]]
-address = "BpaW2ZmCJnDwizWY8eM34JtVqp2kRgnmQcedSVc9USdP"
-program = "/home/b/Documents/dev/49_projects/shingo/artifacts/arcium_program_0.5.1.so"
-
-[[test.genesis]]
-address = "L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95"
-program = "artifacts/lighthouse.so"
-
-[test.validator]
-bind_address = "0.0.0.0"
-ledger = ".anchor/test-ledger"
-rpc_port = 8899
