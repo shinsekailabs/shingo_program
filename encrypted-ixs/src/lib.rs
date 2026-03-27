@@ -42,9 +42,4 @@ mod circuits {
         receiver.from_arcis(input)
     }
 
-    #[instruction]
-    pub fn reveal_signal(encrypted_signal: Enc<Shared, Signal>) -> Signal {
-        let arcis_signal = encrypted_signal.to_arcis();
-        arcis_signal.reveal()
-    }
 }

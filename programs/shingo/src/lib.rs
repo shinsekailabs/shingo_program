@@ -18,7 +18,6 @@ use solana_security_txt::security_txt;
 //  Anchor context : Signal
 // - Arcium instructions
 //   Decrypt Signal
-//   Reveal Signal
 // - Program
 // ------------------------
 
@@ -83,10 +82,6 @@ pub const DEVELOPER_ADDRESS: Pubkey = pubkey!("HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS3
 /// ``comp_def_offset()`` generates a unique identifier from the function name
 pub const COMP_DEF_OFFSET_DECRYPT_SIGNAL: u32 = comp_def_offset("decrypt_signal");
 
-/// This constant identifies our encrypted instruction for on-chain operations.
-/// ``comp_def_offset()`` generates a unique identifier from the function name
-pub const COMP_DEF_OFFSET_REVEAL_SIGNAL: u32 = comp_def_offset("reveal_signal");
-
 // ############# Error codes ###############
 
 #[error_code]
@@ -113,6 +108,8 @@ pub enum ShingoProgramError {
     CannotCreateNewSeasonWhileHasActiveSeason,
     #[msg("Cannot close a season while there's no active season. Create a season first")]
     CannotCloseSeasonWhileNoActiveSeason,
+    #[msg("Cluster not set")]
+    ClusterNotSet,
 }
 
 #[error_code]
@@ -227,21 +224,6 @@ pub struct ObservableSignal {
 }
 
 #[event]
-pub struct ClearSignal {
-    pub market: Market,
-    /// LONG = 0 | SHORT = 1
-    pub side: u8,
-    pub entry: Entry,
-    pub stop_loss: u64,
-    pub profit_points: ProfitPoint,
-    pub size_usd: u64,
-    pub leverage: u64,
-    pub venue: u8,
-    pub timeframe: u64,
-    pub metadata_pubkey: Pubkey,
-}
-
-#[event]
 pub struct NewSeason {
     pub trader_address: Pubkey,
     pub season_address: Pubkey,
@@ -275,7 +257,6 @@ pub struct NewTrader {
 // - CloseSeason
 // - EncryptSignal
 // - DecryptSignal
-// - RevealSignal
 // ##########################################
 
 // ############## Trader #######################
@@ -577,143 +558,6 @@ pub struct DecryptSignalCallback<'info> {
     pub instructions_sysvar: AccountInfo<'info>,
 }
 
-// ################     Reveal signal       ###############
-
-#[init_computation_definition_accounts("reveal_signal", payer)]
-#[derive(Accounts)]
-pub struct InitRevealSignalCompDef<'info> {
-    #[account(mut)]
-    pub payer: Signer<'info>,
-
-    #[account(
-        mut,
-        address = derive_mxe_pda!()
-    )]
-    pub mxe_account: Box<Account<'info, MXEAccount>>,
-
-    #[account(mut)]
-    /// CHECK: ``comp_def_account``, checked by arcium program.
-    /// Can't check it here as it's not initialized yet.
-    pub comp_def_account: UncheckedAccount<'info>,
-
-    pub arcium_program: Program<'info, Arcium>,
-
-    pub system_program: Program<'info, System>,
-
-    // version 0.7.0 migration : new required accounts
-    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
-    /// CHECK: ``address_lookup_table``, checked by arcium program.
-    pub address_lookup_table: UncheckedAccount<'info>,
-
-    #[account(address = LUT_PROGRAM_ID)]
-    /// CHECK: ``lut_program`` is the Address Lookup Table program.
-    pub lut_program: UncheckedAccount<'info>,
-}
-
-#[queue_computation_accounts("reveal_signal", payer)]
-#[derive(Accounts)]
-#[instruction(computation_offset: u64)]
-pub struct RevealSignal<'info> {
-    pub season: Box<Account<'info, Season>>,
-
-    pub signal: Box<Account<'info, Signal>>,
-
-    pub signal_metadata: Box<Account<'info, SignalMetaData>>,
-
-    #[account(mut)]
-    pub payer: Signer<'info>,
-
-    #[account(
-    init_if_needed,
-    payer = payer,
-    space = 8 + 1,
-    seeds = [b"ArciumSignerAccount"],
-    bump,
-    address = derive_sign_pda!(),
-    )]
-    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
-
-    #[account(
-        address = derive_mxe_pda!()
-    )]
-    pub mxe_account: Box<Account<'info, MXEAccount>>,
-
-    #[account(
-        mut,
-        address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet)
-    )]
-    /// CHECK: ``mempool_account``, checked by the arcium program
-    pub mempool_account: UncheckedAccount<'info>,
-
-    #[account(
-        mut,
-        address = derive_execpool_pda!(mxe_account, ErrorCode::ClusterNotSet)
-    )]
-    /// CHECK: ``executing_pool``, checked by the arcium program
-    pub executing_pool: UncheckedAccount<'info>,
-
-    #[account(
-        mut,
-        address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet)
-    )]
-    /// CHECK: ``computation_account``, checked by the arcium program.
-    pub computation_account: UncheckedAccount<'info>,
-
-    #[account(
-        address = derive_comp_def_pda!(COMP_DEF_OFFSET_REVEAL_SIGNAL)
-    )]
-    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
-
-    #[account(
-        mut,
-        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
-    )]
-    pub cluster_account: Box<Account<'info, Cluster>>,
-
-    #[account(
-        mut,
-        address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS,
-    )]
-    pub pool_account: Box<Account<'info, FeePool>>,
-
-    #[account(
-        mut,
-        address = ARCIUM_CLOCK_ACCOUNT_ADDRESS,
-    )]
-    pub clock_account: Box<Account<'info, ClockAccount>>,
-
-    pub system_program: Program<'info, System>,
-    pub arcium_program: Program<'info, Arcium>,
-}
-
-#[callback_accounts("reveal_signal")]
-#[derive(Accounts)]
-pub struct RevealSignalCallback<'info> {
-    pub arcium_program: Program<'info, Arcium>,
-
-    #[account(
-        address = derive_comp_def_pda!(COMP_DEF_OFFSET_REVEAL_SIGNAL)
-    )]
-    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
-
-    #[account(
-        address = derive_mxe_pda!()
-    )]
-    pub mxe_account: Box<Account<'info, MXEAccount>>,
-
-    /// CHECK: ``computation_account``, checked by arcium program via constraints in the callback context.
-    pub computation_account: UncheckedAccount<'info>,
-
-    #[account(
-        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
-    )]
-    pub cluster_account: Box<Account<'info, Cluster>>,
-
-    #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
-    /// CHECK: ``instructions_sysvar``, checked by the account constraint
-    pub instructions_sysvar: AccountInfo<'info>,
-}
-
 // ###################################
 // ############# PROGRAM #############
 // ###################################
@@ -738,7 +582,6 @@ pub mod shingo_program {
     // ########## Signal: encrypt_signal
     // ######### Arcium ############
     // ######### Arcium : decrypt_signal
-    // ######### Arcium : reveal_signal
     // --------------------------------------------------------------
 
     // ########## Trader ###########
@@ -1070,97 +913,4 @@ pub mod shingo_program {
         Ok(())
     }
 
-    // ######### Arcium : reveal_signal     ########
-
-    /// # Errors
-    /// Cannot fail
-    /// Called once by the admin
-    pub fn init_reveal_signal_comp_def(ctx: Context<InitRevealSignalCompDef>) -> Result<()> {
-        init_comp_def(
-            ctx.accounts,
-            Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://raw.githubusercontent.com/shinsekailabs/shingo_program/build/main/reveal_signal.arcis"
-                    .to_string(),
-                hash: circuit_hash!("reveal_signal"),
-            })),
-            None,
-        )?;
-        Ok(())
-    }
-
-    /// # Errors
-    /// Errors if ``queue_computation`` fails
-    /// Errors if the signal's season is active
-    /// Errors if the signal's season isn't matching the user given season
-    pub fn reveal_signal(ctx: Context<RevealSignal>, computation_offset: u64) -> Result<()> {
-        require!(
-            (ctx.accounts.season.id == ctx.accounts.signal_metadata.season_id)
-                && !ctx.accounts.season.is_active,
-            ShingoProgramError::Nono
-        );
-        // --------------------------------------
-        let init_space: u32 = Signal::INIT_SPACE
-            .try_into()
-            .map_err(|_| ShingoProgramError::CastingFailure)?;
-
-        let args = ArgBuilder::new()
-            .account(ctx.accounts.signal.key(), 8, init_space)
-            .build();
-
-        ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
-
-        queue_computation(
-            ctx.accounts,
-            computation_offset,
-            args,
-            vec![RevealSignalCallback::callback_ix(
-                computation_offset,
-                &ctx.accounts.mxe_account,
-                &[],
-            )?],
-            1,
-            0,
-        )?;
-
-        Ok(())
-    }
-
-    /// # Errors
-    /// Errors if the computation aborted
-    #[arcium_callback(encrypted_ix = "reveal_signal")]
-    pub fn reveal_signal_callback(
-        ctx: Context<RevealSignalCallback>,
-        output: SignedComputationOutputs<RevealSignalOutput>,
-    ) -> Result<()> {
-        let Ok(RevealSignalOutput { field_0: my_output }) = output.verify_output(
-            &ctx.accounts.cluster_account,
-            &ctx.accounts.computation_account,
-        ) else {
-            return Err(ShingoProgramError::AbortedComputation.into());
-        };
-
-        emit!(ClearSignal {
-            market: Market {
-                left: my_output.field_0.field_0,
-                right: my_output.field_0.field_1
-            },
-            side: my_output.field_1,
-            entry: Entry {
-                kind: my_output.field_2.field_0,
-                price: my_output.field_2.field_1
-            },
-            stop_loss: my_output.field_3,
-            profit_points: ProfitPoint {
-                price: my_output.field_4.field_0,
-                size_pourcentage: my_output.field_4.field_1
-            },
-            size_usd: my_output.field_5,
-            leverage: my_output.field_6,
-            venue: my_output.field_7,
-            timeframe: my_output.field_8,
-            metadata_pubkey: my_output.field_9.into(),
-        });
-
-        Ok(())
-    }
 }

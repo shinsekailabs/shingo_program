@@ -586,59 +586,6 @@
       "args": []
     },
     {
-      "name": "init_reveal_signal_comp_def",
-      "docs": [
-        "# Errors",
-        "Cannot fail",
-        "Called once by the admin"
-      ],
-      "discriminator": [
-        184,
-        216,
-        235,
-        61,
-        40,
-        137,
-        34,
-        175
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "mxe_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account",
-          "docs": [
-            "Can't check it here as it's not initialized yet."
-          ],
-          "writable": true
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "address_lookup_table",
-          "writable": true
-        },
-        {
-          "name": "lut_program",
-          "address": "AddressLookupTab1e1111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "initialize_season",
       "docs": [
         "# Errors",
@@ -879,178 +826,6 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "reveal_signal",
-      "docs": [
-        "# Errors",
-        "Errors if ``queue_computation`` fails",
-        "Errors if the signal's season is active",
-        "Errors if the signal's season isn't matching the user given season"
-      ],
-      "discriminator": [
-        224,
-        171,
-        21,
-        85,
-        195,
-        253,
-        227,
-        240
-      ],
-      "accounts": [
-        {
-          "name": "season"
-        },
-        {
-          "name": "signal"
-        },
-        {
-          "name": "signal_metadata"
-        },
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "sign_pda_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "mempool_account",
-          "writable": true
-        },
-        {
-          "name": "executing_pool",
-          "writable": true
-        },
-        {
-          "name": "computation_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "cluster_account",
-          "writable": true
-        },
-        {
-          "name": "pool_account",
-          "writable": true,
-          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
-        },
-        {
-          "name": "clock_account",
-          "writable": true,
-          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        }
-      ],
-      "args": [
-        {
-          "name": "computation_offset",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "reveal_signal_callback",
-      "docs": [
-        "# Errors",
-        "Errors if the computation aborted"
-      ],
-      "discriminator": [
-        218,
-        151,
-        149,
-        167,
-        53,
-        163,
-        236,
-        154
-      ],
-      "accounts": [
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "computation_account"
-        },
-        {
-          "name": "cluster_account"
-        },
-        {
-          "name": "instructions_sysvar",
-          "address": "Sysvar1nstructions1111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "output",
-          "type": {
-            "defined": {
-              "name": "SignedComputationOutputs",
-              "generics": [
-                {
-                  "kind": "type",
-                  "type": {
-                    "defined": {
-                      "name": "RevealSignalOutput"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
     },
     {
       "name": "subscribe_to_season",
@@ -1313,19 +1088,6 @@
   ],
   "events": [
     {
-      "name": "ClearSignal",
-      "discriminator": [
-        211,
-        110,
-        147,
-        27,
-        41,
-        184,
-        196,
-        55
-      ]
-    },
-    {
       "name": "NewSeason",
       "discriminator": [
         98,
@@ -1446,6 +1208,11 @@
       "code": 6010,
       "name": "CannotCloseSeasonWhileNoActiveSeason",
       "msg": "Cannot close a season while there's no active season. Create a season first"
+    },
+    {
+      "code": 6011,
+      "name": "ClusterNotSet",
+      "msg": "Cluster not set"
     }
   ],
   "types": [
@@ -1533,69 +1300,6 @@
                 }
               }
             ]
-          }
-        ]
-      }
-    },
-    {
-      "name": "ClearSignal",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "market",
-            "type": {
-              "defined": {
-                "name": "Market"
-              }
-            }
-          },
-          {
-            "name": "side",
-            "docs": [
-              "LONG = 0 | SHORT = 1"
-            ],
-            "type": "u8"
-          },
-          {
-            "name": "entry",
-            "type": {
-              "defined": {
-                "name": "Entry"
-              }
-            }
-          },
-          {
-            "name": "stop_loss",
-            "type": "u64"
-          },
-          {
-            "name": "profit_points",
-            "type": {
-              "defined": {
-                "name": "ProfitPoint"
-              }
-            }
-          },
-          {
-            "name": "size_usd",
-            "type": "u64"
-          },
-          {
-            "name": "leverage",
-            "type": "u64"
-          },
-          {
-            "name": "venue",
-            "type": "u8"
-          },
-          {
-            "name": "timeframe",
-            "type": "u64"
-          },
-          {
-            "name": "metadata_pubkey",
-            "type": "pubkey"
           }
         ]
       }
@@ -1860,22 +1564,6 @@
       }
     },
     {
-      "name": "Entry",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "kind",
-            "type": "u8"
-          },
-          {
-            "name": "price",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
       "name": "Epoch",
       "docs": [
         "The network epoch"
@@ -1987,32 +1675,6 @@
           {
             "name": "bump",
             "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Market",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "left",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
-          {
-            "name": "right",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
           }
         ]
       }
@@ -2421,165 +2083,6 @@
           },
           {
             "name": "PlaintextPoint"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ProfitPoint",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "price",
-            "type": "u64"
-          },
-          {
-            "name": "size_pourcentage",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSignalOutput",
-      "docs": [
-        "The output of the callback instruction. Provided as a struct with ordered fields",
-        "as anchor does not support tuples and tuple structs yet."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "RevealSignalOutputStruct0"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSignalOutputStruct0",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "RevealSignalOutputStruct00"
-              }
-            }
-          },
-          {
-            "name": "field_1",
-            "type": "u8"
-          },
-          {
-            "name": "field_2",
-            "type": {
-              "defined": {
-                "name": "RevealSignalOutputStruct02"
-              }
-            }
-          },
-          {
-            "name": "field_3",
-            "type": "u64"
-          },
-          {
-            "name": "field_4",
-            "type": {
-              "defined": {
-                "name": "RevealSignalOutputStruct04"
-              }
-            }
-          },
-          {
-            "name": "field_5",
-            "type": "u64"
-          },
-          {
-            "name": "field_6",
-            "type": "u64"
-          },
-          {
-            "name": "field_7",
-            "type": "u8"
-          },
-          {
-            "name": "field_8",
-            "type": "u64"
-          },
-          {
-            "name": "field_9",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSignalOutputStruct00",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
-          {
-            "name": "field_1",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSignalOutputStruct02",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": "u8"
-          },
-          {
-            "name": "field_1",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSignalOutputStruct04",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": "u64"
-          },
-          {
-            "name": "field_1",
-            "type": "u64"
           }
         ]
       }
