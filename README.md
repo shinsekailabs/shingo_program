@@ -38,25 +38,25 @@ Traders publish trading signals ( i.e stock tips ), and these signals are the ep
 Contract address / ProgramID :
 
 ```
-7GPHummpkq9W9DXBurQ1rmGESFfeS8gAdqLXUBudpcq9
+EiGDL3AuhX7McziVEcEfAyxxV7G8997KQ2DwRapMN8xU
 ```
 
 MXE Public key for above contract :
 
 ```
-21LYCCjVHvbk8A7hB9ruLUoYFhjENEDBcKGWuyiPhR4U
+7VuU8RWJKnVioX4jW8txbV6e6ikdfjXFcNxRPiB9cjuj
 ```
 
-Explorer link : https://explorer.solana.com/address/7GPHummpkq9W9DXBurQ1rmGESFfeS8gAdqLXUBudpcq9?cluster=devnet
+Explorer link : https://explorer.solana.com/address/EiGDL3AuhX7McziVEcEfAyxxV7G8997KQ2DwRapMN8xU?cluster=devnet
 
-Orbmarkets link : https://orbmarkets.io/address/7GPHummpkq9W9DXBurQ1rmGESFfeS8gAdqLXUBudpcq9/history?cluster=devnet&hideSpam=true
+Orbmarkets link : https://orbmarkets.io/address/EiGDL3AuhX7McziVEcEfAyxxV7G8997KQ2DwRapMN8xU/history?cluster=devnet&hideSpam=true
 
-Solscan link : https://solscan.io/account/7GPHummpkq9W9DXBurQ1rmGESFfeS8gAdqLXUBudpcq9?cluster=devnet
+Solscan link : https://solscan.io/account/EiGDL3AuhX7McziVEcEfAyxxV7G8997KQ2DwRapMN8xU?cluster=devnet
 
 Idl account
 
 ```
-3mrj8jf5shvKVfapwCCyH71EnVFpqVTBKEMeb3ADYND5
+1272s92t2KLQ5vT46UH2ngKpLjrK3QkrsN4QL7VHXmGx
 ```
 
 All our programs are immutable. If I forgot to make a program immutable, ping me and I'll make it immutable immediately.
