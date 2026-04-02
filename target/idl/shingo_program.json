@@ -639,6 +639,54 @@
       "args": []
     },
     {
+      "name": "init_share_patient_data_comp_def",
+      "discriminator": [
+        189,
+        2,
+        157,
+        112,
+        150,
+        172,
+        52,
+        3
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "docs": [
+            "Can't check it here as it's not initialized yet."
+          ],
+          "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "initialize_season",
       "docs": [
         "# Errors",
@@ -1053,6 +1101,373 @@
       ]
     },
     {
+      "name": "share_patient_data",
+      "docs": [
+        "Initiates confidential sharing of patient data with a specified receiver.",
+        "",
+        "This function triggers an MPC computation that re-encrypts the patient's medical data",
+        "for a specific receiver. The receiver will be able to decrypt the data using their",
+        "private key, while the data remains encrypted for everyone else. The original",
+        "stored data is not modified and remains encrypted for the original owner.",
+        "",
+        "# Arguments",
+        "* `receiver` - Public key of the authorized recipient",
+        "* `receiver_nonce` - Cryptographic nonce for the receiver's encryption",
+        "* `sender_pub_key` - Sender's public key for the operation",
+        "* `nonce` - Cryptographic nonce for the sender's encryption"
+      ],
+      "discriminator": [
+        86,
+        3,
+        217,
+        123,
+        195,
+        53,
+        253,
+        86
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "patient_data",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  116,
+                  105,
+                  101,
+                  110,
+                  116,
+                  95,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "payer"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "receiver",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "receiver_nonce",
+          "type": "u128"
+        },
+        {
+          "name": "sender_pub_key",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "share_patient_data_callback",
+      "docs": [
+        "Handles the result of the patient data sharing MPC computation.",
+        "",
+        "This callback processes the re-encrypted patient data that has been prepared for",
+        "the specified receiver. It emits an event containing all the medical data fields",
+        "encrypted specifically for the receiver's public key."
+      ],
+      "discriminator": [
+        241,
+        59,
+        252,
+        38,
+        75,
+        217,
+        50,
+        238
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "SharePatientDataOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "store_patient_data",
+      "docs": [
+        "Stores encrypted patient medical data on-chain.",
+        "",
+        "This function stores patient medical information in encrypted form. All data fields",
+        "are provided as encrypted 32-byte arrays that can only be decrypted by authorized parties.",
+        "The data remains confidential while being stored on the public Solana blockchain.",
+        "",
+        "# Arguments",
+        "* `patient_id` - Encrypted unique identifier for the patient",
+        "* `age` - Encrypted patient age",
+        "* `gender` - Encrypted patient gender information",
+        "* `blood_type` - Encrypted blood type information",
+        "* `weight` - Encrypted patient weight",
+        "* `height` - Encrypted patient height",
+        "* `allergies` - Array of encrypted allergy information (up to 5 entries)"
+      ],
+      "discriminator": [
+        108,
+        43,
+        30,
+        233,
+        169,
+        112,
+        32,
+        150
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "patient_data",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  116,
+                  105,
+                  101,
+                  110,
+                  116,
+                  95,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "payer"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "patient_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "age",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "gender",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "blood_type",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "weight",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "height",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "allergies",
+          "type": {
+            "array": [
+              {
+                "array": [
+                  "u8",
+                  32
+                ]
+              },
+              5
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "subscribe_to_season",
       "docs": [
         "# Errors",
@@ -1246,6 +1661,19 @@
       ]
     },
     {
+      "name": "PatientData",
+      "discriminator": [
+        91,
+        194,
+        102,
+        240,
+        87,
+        230,
+        52,
+        244
+      ]
+    },
+    {
       "name": "Season",
       "discriminator": [
         76,
@@ -1378,6 +1806,19 @@
       ]
     },
     {
+      "name": "ReceivedPatientDataEvent",
+      "discriminator": [
+        111,
+        196,
+        97,
+        110,
+        222,
+        162,
+        225,
+        1
+      ]
+    },
+    {
       "name": "SeasonFinale",
       "discriminator": [
         170,
@@ -1394,8 +1835,58 @@
   "errors": [
     {
       "code": 6000,
-      "name": "ClusterNotSet",
-      "msg": "Cluster not set"
+      "name": "NotSubbed",
+      "msg": "Not Subbed"
+    },
+    {
+      "code": 6001,
+      "name": "Nono",
+      "msg": "Nope"
+    },
+    {
+      "code": 6002,
+      "name": "AbortedComputation",
+      "msg": "The computation was aborted"
+    },
+    {
+      "code": 6003,
+      "name": "SubscriptionFailed",
+      "msg": "subscription failed"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidSubscriptionPrice",
+      "msg": "invalid subscription price"
+    },
+    {
+      "code": 6005,
+      "name": "CheckedArithmeticFailure",
+      "msg": "Checked Arithmetic failure"
+    },
+    {
+      "code": 6006,
+      "name": "LookupTableDeserializationFailure",
+      "msg": "LookupTable Deserialization failure"
+    },
+    {
+      "code": 6007,
+      "name": "CastingFailure",
+      "msg": "Casting failure"
+    },
+    {
+      "code": 6008,
+      "name": "BytemuckFailure",
+      "msg": "Bytemuck failure"
+    },
+    {
+      "code": 6009,
+      "name": "CannotCreateNewSeasonWhileHasActiveSeason",
+      "msg": "Cannot create new season while there's an active season. Close current season first"
+    },
+    {
+      "code": 6010,
+      "name": "CannotCloseSeasonWhileNoActiveSeason",
+      "msg": "Cannot close a season while there's no active season. Create a season first"
     }
   ],
   "types": [
@@ -2376,6 +2867,106 @@
       }
     },
     {
+      "name": "PatientData",
+      "docs": [
+        "Stores encrypted patient medical information."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "patient_id",
+            "docs": [
+              "Encrypted unique patient identifier"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "age",
+            "docs": [
+              "Encrypted patient age"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "gender",
+            "docs": [
+              "Encrypted gender information"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "blood_type",
+            "docs": [
+              "Encrypted blood type"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "weight",
+            "docs": [
+              "Encrypted weight measurement"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "height",
+            "docs": [
+              "Encrypted height measurement"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "allergies",
+            "docs": [
+              "Array of encrypted allergy information (up to 5 allergies)"
+            ],
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                5
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "ProfitPoint",
       "type": {
         "kind": "struct",
@@ -2387,6 +2978,91 @@
           {
             "name": "size_pourcentage",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReceivedPatientDataEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "patient_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "age",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "gender",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "blood_type",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "weight",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "height",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "allergies",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                5
+              ]
+            }
           }
         ]
       }
@@ -2612,6 +3288,32 @@
                 "vec": "bool"
               }
             ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "SharePatientDataOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "11"
+                  }
+                ]
+              }
+            }
           }
         ]
       }

@@ -47,4 +47,26 @@ mod circuits {
         let arcis_signal = encrypted_signal.to_arcis();
         arcis_signal.reveal()
     }
+
+    // --- Share medical records reproduction
+    // link : https://github.com/arcium-hq/examples/blob/main/share_medical_records/encrypted-ixs/src/lib.rs
+
+    pub struct PatientData {
+        pub patient_id: u64,
+        pub age: u8,
+        pub gender: bool,
+        pub blood_type: u8,
+        pub weight: u16,
+        pub height: u16,
+        pub allergies: [bool; 5],
+    }
+
+    #[instruction]
+    pub fn share_patient_data(
+        receiver: Shared,
+        input_ctxt: Enc<Shared, PatientData>,
+    ) -> Enc<Shared, PatientData> {
+        let input = input_ctxt.to_arcis();
+        receiver.from_arcis(input)
+    }
 }
