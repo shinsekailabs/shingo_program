@@ -38,20 +38,14 @@ Traders publish trading signals ( i.e stock tips ), and these signals are the ep
 Contract address / ProgramID :
 
 ```
-EiGDL3AuhX7McziVEcEfAyxxV7G8997KQ2DwRapMN8xU
+DpZu93fU4b8H8mwWFGW8gox7pAuT4QVVcCktiyEEVHk3
 ```
 
-MXE Public key for above contract :
+Explorer link : https://explorer.solana.com/address/DpZu93fU4b8H8mwWFGW8gox7pAuT4QVVcCktiyEEVHk3?cluster=devnet
 
-```
-7VuU8RWJKnVioX4jW8txbV6e6ikdfjXFcNxRPiB9cjuj
-```
+Orbmarkets link : https://orbmarkets.io/address/DpZu93fU4b8H8mwWFGW8gox7pAuT4QVVcCktiyEEVHk3/history?cluster=devnet&hideSpam=true
 
-Explorer link : https://explorer.solana.com/address/EiGDL3AuhX7McziVEcEfAyxxV7G8997KQ2DwRapMN8xU?cluster=devnet
-
-Orbmarkets link : https://orbmarkets.io/address/EiGDL3AuhX7McziVEcEfAyxxV7G8997KQ2DwRapMN8xU/history?cluster=devnet&hideSpam=true
-
-Solscan link : https://solscan.io/account/EiGDL3AuhX7McziVEcEfAyxxV7G8997KQ2DwRapMN8xU?cluster=devnet
+Solscan link : https://solscan.io/account/DpZu93fU4b8H8mwWFGW8gox7pAuT4QVVcCktiyEEVHk3?cluster=devnet
 
 Idl account
 
