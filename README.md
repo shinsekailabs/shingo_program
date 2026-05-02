@@ -38,20 +38,15 @@ Traders publish trading signals ( i.e stock tips ), and these signals are the ep
 Contract address / ProgramID :
 
 ```
-DSCRm9XeFVnzVw28MLmmw3G7jmEg8KW6gjaea9sTutTJ
+8TqFQ2vVzK7ZPtuHuvpFzLM484yQksofMFcnfFL2mDR3
 ```
 
-Explorer link : https://explorer.solana.com/address/DSCRm9XeFVnzVw28MLmmw3G7jmEg8KW6gjaea9sTutTJ?cluster=devnet
+Explorer link : https://explorer.solana.com/address/8TqFQ2vVzK7ZPtuHuvpFzLM484yQksofMFcnfFL2mDR3?cluster=devnet
 
-Orbmarkets link : https://orbmarkets.io/address/DSCRm9XeFVnzVw28MLmmw3G7jmEg8KW6gjaea9sTutTJ/history?cluster=devnet&hideSpam=true
+Orbmarkets link : https://orbmarkets.io/address/8TqFQ2vVzK7ZPtuHuvpFzLM484yQksofMFcnfFL2mDR3/history?cluster=devnet&hideSpam=true
 
-Solscan link : https://solscan.io/account/DSCRm9XeFVnzVw28MLmmw3G7jmEg8KW6gjaea9sTutTJ?cluster=devnet
+Solscan link : https://solscan.io/account/8TqFQ2vVzK7ZPtuHuvpFzLM484yQksofMFcnfFL2mDR3?cluster=devnet
 
-Idl account
-
-```
-LaFTyZNDrTXdALoEEJeeYjSA4Z5oq2hQkQyiHTFsbZ7
-```
 
 All our programs are immutable. If I forgot to make a program immutable, ping me and I'll make it immutable immediately.
 
