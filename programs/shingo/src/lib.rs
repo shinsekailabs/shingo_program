@@ -718,7 +718,6 @@ pub struct RevealSignalCallback<'info> {
 // ############# PROGRAM #############
 // ###################################
 
-
 // --- Share medical records reproduction
 
 const COMP_DEF_OFFSET_SHARE_PATIENT_DATA: u32 = comp_def_offset("share_patient_data");
@@ -1148,36 +1147,16 @@ pub mod shingo_program {
         );
         // --------------------------------------
 
-        let signal = &ctx.accounts.signal;
-        let [market_left, market_right] = signal.market;
-        let side = signal.side;
-        let [entry_kind, entry_price] = signal.entry;
-        let stop_loss = signal.stop_loss;
-        let [profit_price, profit_size_pourcentage] = signal.profit_points;
-        let size_usd = signal.size_usd;
-        let leverage = signal.leverage;
-        let venue = signal.venue;
-        let timeframe = signal.timeframe;
-        let metadata_pubkey = signal.metadata_pubkey;
+        let init_space: u32 = Signal::INIT_SPACE
+            .try_into()
+            .map_err(|_| ShingoProgramError::CastingFailure)?;
 
         let args = ArgBuilder::new()
             .x25519_pubkey(receiver)
             .plaintext_u128(receiver_nonce)
             .x25519_pubkey(sender_pub_key)
             .plaintext_u128(nonce)
-            .encrypted_u32(market_left)
-            .encrypted_u32(market_right)
-            .encrypted_u32(side)
-            .encrypted_u32(entry_kind)
-            .encrypted_u32(entry_price)
-            .encrypted_u32(stop_loss)
-            .encrypted_u32(profit_price)
-            .encrypted_u32(profit_size_pourcentage)
-            .encrypted_u32(size_usd)
-            .encrypted_u32(leverage)
-            .encrypted_u32(venue)
-            .encrypted_u32(timeframe)
-            .encrypted_u32(metadata_pubkey)
+            .account(ctx.accounts.signal.key(), 8, init_space)
             .build();
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
@@ -1289,34 +1268,14 @@ pub mod shingo_program {
             ShingoProgramError::Nono
         );
         // --------------------------------------
-        let signal = &ctx.accounts.signal;
-        let [market_left, market_right] = signal.market;
-        let side = signal.side;
-        let [entry_kind, entry_price] = signal.entry;
-        let stop_loss = signal.stop_loss;
-        let [profit_price, profit_size_pourcentage] = signal.profit_points;
-        let size_usd = signal.size_usd;
-        let leverage = signal.leverage;
-        let venue = signal.venue;
-        let timeframe = signal.timeframe;
-        let metadata_pubkey = signal.metadata_pubkey;
+        let init_space: u32 = Signal::INIT_SPACE
+            .try_into()
+            .map_err(|_| ShingoProgramError::CastingFailure)?;
 
         let args = ArgBuilder::new()
             .x25519_pubkey(receiver)
             .plaintext_u128(receiver_nonce)
-            .encrypted_u32(market_left)
-            .encrypted_u32(market_right)
-            .encrypted_u32(side)
-            .encrypted_u32(entry_kind)
-            .encrypted_u32(entry_price)
-            .encrypted_u32(stop_loss)
-            .encrypted_u32(profit_price)
-            .encrypted_u32(profit_size_pourcentage)
-            .encrypted_u32(size_usd)
-            .encrypted_u32(leverage)
-            .encrypted_u32(venue)
-            .encrypted_u32(timeframe)
-            .encrypted_u32(metadata_pubkey)
+            .account(ctx.accounts.signal.key(), 8, init_space)
             .build();
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
