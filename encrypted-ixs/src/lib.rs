@@ -9,10 +9,19 @@ mod circuits {
         pub size_pourcentage: u64,
     }
 
-    pub struct Market {
-        pub left: [u8; 16],
-        pub right: [u8; 16],
-    }
+    /// Ticker
+    ///
+    /// SOL = 1  <br>
+    /// BTC = 2  <br>
+    /// ETH = 3  <br>
+    /// USDS (USD Sky / DAI new name) = 4  <br>
+    /// USDT = 5  <br>
+    /// USDC = 6  <br>
+    /// JupUSD = 7  <br>
+    /// EURC = 8  <br>
+    /// USDG = 9  <br>
+    /// PyUSD = 10  <br>
+    pub type Ticker = u64;
 
     pub struct Entry {
         pub kind: u8,
@@ -20,7 +29,8 @@ mod circuits {
     }
 
     pub struct Signal {
-        pub market: Market,
+        pub market_left: Ticker,
+        pub market_right: Ticker,
         /// LONG = 0 | SHORT = 1
         pub side: u8,
         pub entry: Entry,
@@ -30,7 +40,12 @@ mod circuits {
         pub leverage: u64,
         pub venue: u8,
         pub timeframe: u64,
-        pub metadata_pubkey: [u8; 32],
+        // -- clear values
+        pub season_id: u64,
+        pub number: u64,
+        pub created_at: i64,
+        // pub author: [u8; 32] // Pubkey,
+        // pub author: [u128; 2] // Pubkey,
     }
 
     #[instruction]
@@ -68,5 +83,4 @@ mod circuits {
         let input = input_ctxt.to_arcis();
         receiver.from_arcis(input)
     }
-
 }

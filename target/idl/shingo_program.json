@@ -150,9 +150,6 @@
           "name": "signal"
         },
         {
-          "name": "signal_metadata"
-        },
-        {
           "name": "sign_pda_account",
           "writable": true,
           "pda": {
@@ -380,62 +377,24 @@
               }
             ]
           }
-        },
-        {
-          "name": "signal_metadata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  105,
-                  103,
-                  110,
-                  97,
-                  108,
-                  95,
-                  109,
-                  101,
-                  116,
-                  97,
-                  100,
-                  97,
-                  116,
-                  97
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "trader"
-              },
-              {
-                "kind": "account",
-                "path": "season.id",
-                "account": "Season"
-              },
-              {
-                "kind": "account",
-                "path": "season.count",
-                "account": "Season"
-              }
-            ]
-          }
         }
       ],
       "args": [
         {
-          "name": "market",
+          "name": "market_left",
           "type": {
             "array": [
-              {
-                "array": [
-                  "u8",
-                  32
-                ]
-              },
-              2
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "market_right",
+          "type": {
+            "array": [
+              "u8",
+              32
             ]
           }
         },
@@ -514,15 +473,6 @@
         },
         {
           "name": "timeframe",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "signal_metadata_pubkey",
           "type": {
             "array": [
               "u8",
@@ -952,9 +902,6 @@
         },
         {
           "name": "signal"
-        },
-        {
-          "name": "signal_metadata"
         },
         {
           "name": "payer",
@@ -1713,19 +1660,6 @@
       ]
     },
     {
-      "name": "SignalMetaData",
-      "discriminator": [
-        53,
-        196,
-        153,
-        95,
-        24,
-        186,
-        217,
-        231
-      ]
-    },
-    {
       "name": "SubscriptionPass",
       "discriminator": [
         126,
@@ -1997,12 +1931,12 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "market",
-            "type": {
-              "defined": {
-                "name": "Market"
-              }
-            }
+            "name": "market_left",
+            "type": "u64"
+          },
+          {
+            "name": "market_right",
+            "type": "u64"
           },
           {
             "name": "side",
@@ -2048,8 +1982,16 @@
             "type": "u64"
           },
           {
-            "name": "metadata_pubkey",
-            "type": "pubkey"
+            "name": "season_id",
+            "type": "u64"
+          },
+          {
+            "name": "number",
+            "type": "u64"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
           }
         ]
       }
@@ -2304,7 +2246,7 @@
                 "generics": [
                   {
                     "kind": "const",
-                    "value": "74"
+                    "value": "15"
                   }
                 ]
               }
@@ -2441,32 +2383,6 @@
           {
             "name": "bump",
             "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Market",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "left",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
-          },
-          {
-            "name": "right",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
           }
         ]
       }
@@ -2614,16 +2530,20 @@
             }
           },
           {
-            "name": "market",
+            "name": "market_left",
             "type": {
               "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "market_right",
+            "type": {
+              "array": [
+                "u8",
+                32
               ]
             }
           },
@@ -2710,7 +2630,25 @@
             }
           },
           {
-            "name": "metadata_pubkey",
+            "name": "season_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "number",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "created_at",
             "type": {
               "array": [
                 "u8",
@@ -3107,39 +3045,35 @@
         "fields": [
           {
             "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "RevealSignalOutputStruct00"
-              }
-            }
+            "type": "u64"
           },
           {
             "name": "field_1",
-            "type": "u8"
+            "type": "u64"
           },
           {
             "name": "field_2",
-            "type": {
-              "defined": {
-                "name": "RevealSignalOutputStruct02"
-              }
-            }
+            "type": "u8"
           },
           {
             "name": "field_3",
-            "type": "u64"
-          },
-          {
-            "name": "field_4",
             "type": {
               "defined": {
-                "name": "RevealSignalOutputStruct04"
+                "name": "RevealSignalOutputStruct03"
               }
             }
           },
           {
-            "name": "field_5",
+            "name": "field_4",
             "type": "u64"
+          },
+          {
+            "name": "field_5",
+            "type": {
+              "defined": {
+                "name": "RevealSignalOutputStruct05"
+              }
+            }
           },
           {
             "name": "field_6",
@@ -3147,52 +3081,33 @@
           },
           {
             "name": "field_7",
-            "type": "u8"
+            "type": "u64"
           },
           {
             "name": "field_8",
-            "type": "u64"
+            "type": "u8"
           },
           {
             "name": "field_9",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSignalOutputStruct00",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
+            "type": "u64"
           },
           {
-            "name": "field_1",
-            "type": {
-              "array": [
-                "u8",
-                16
-              ]
-            }
+            "name": "field_10",
+            "type": "u64"
+          },
+          {
+            "name": "field_11",
+            "type": "u64"
+          },
+          {
+            "name": "field_12",
+            "type": "i64"
           }
         ]
       }
     },
     {
-      "name": "RevealSignalOutputStruct02",
+      "name": "RevealSignalOutputStruct03",
       "type": {
         "kind": "struct",
         "fields": [
@@ -3208,7 +3123,7 @@
       }
     },
     {
-      "name": "RevealSignalOutputStruct04",
+      "name": "RevealSignalOutputStruct05",
       "type": {
         "kind": "struct",
         "fields": [
@@ -3381,16 +3296,20 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "market",
+            "name": "market_left",
             "type": {
               "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "market_right",
+            "type": {
+              "array": [
+                "u8",
+                32
               ]
             }
           },
@@ -3477,23 +3396,6 @@
             }
           },
           {
-            "name": "metadata_pubkey",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "SignalMetaData",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
             "name": "season_id",
             "type": "u64"
           },
@@ -3504,14 +3406,6 @@
           {
             "name": "created_at",
             "type": "i64"
-          },
-          {
-            "name": "signal_pubkey",
-            "type": "pubkey"
-          },
-          {
-            "name": "author",
-            "type": "pubkey"
           }
         ]
       }

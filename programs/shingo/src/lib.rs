@@ -123,16 +123,24 @@ pub enum ErrorCode {
 
 // ############# Accounts and types ###############
 
+/// Ticker
+///
+/// SOL = 1  <br>
+/// BTC = 2  <br>
+/// ETH = 3  <br>
+/// USDS (USD Sky / DAI new name) = 4  <br>
+/// USDT = 5  <br>
+/// USDC = 6  <br>
+/// ```JupUSD``` = 7  <br>
+/// EURC = 8  <br>
+/// USDG = 9  <br>
+/// ```PyUSD``` = 10  <br>
+pub type Ticker = u64;
+
 #[derive(AnchorDeserialize, AnchorSerialize, Clone)]
 pub struct ProfitPoint {
     pub price: u64,
     pub size_pourcentage: u64,
-}
-
-#[derive(AnchorDeserialize, AnchorSerialize, Clone)]
-pub struct Market {
-    pub left: [u8; 16],
-    pub right: [u8; 16],
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone)]
@@ -144,7 +152,8 @@ pub struct Entry {
 #[account]
 #[derive(InitSpace)]
 pub struct Signal {
-    pub market: [[u8; 32]; 2],
+    pub market_left: [u8; 32],
+    pub market_right: [u8; 32],
     pub side: [u8; 32],
     pub entry: [[u8; 32]; 2],
     pub stop_loss: [u8; 32],
@@ -153,25 +162,15 @@ pub struct Signal {
     pub leverage: [u8; 32],
     pub venue: [u8; 32],
     pub timeframe: [u8; 32],
-    pub metadata_pubkey: [u8; 32],
+    // -- clear values
+    pub season_id: u64,
+    pub number: u64,
+    pub created_at: i64,
+    // pub author: Pubkey,
 }
 
 impl Signal {
     pub const SEED: &'static [u8; 6] = b"signal";
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct SignalMetaData {
-    pub season_id: u64,
-    pub number: u64,
-    pub created_at: i64,
-    pub signal_pubkey: Pubkey,
-    pub author: Pubkey,
-}
-
-impl SignalMetaData {
-    pub const SEED: &'static [u8; 15] = b"signal_metadata";
 }
 
 #[account]
@@ -214,7 +213,8 @@ impl SubscriptionPass {
 #[event]
 pub struct ObservableSignal {
     pub nonce: [u8; 16],
-    pub market: [[u8; 32]; 2],
+    pub market_left: [u8; 32],
+    pub market_right: [u8; 32],
     pub side: [u8; 32],
     pub entry: [[u8; 32]; 2],
     pub stop_loss: [u8; 32],
@@ -223,12 +223,17 @@ pub struct ObservableSignal {
     pub leverage: [u8; 32],
     pub venue: [u8; 32],
     pub timeframe: [u8; 32],
-    pub metadata_pubkey: [u8; 32],
+    // -- clear values, but re-encrypted for observer
+    pub season_id: [u8; 32],
+    pub number: [u8; 32],
+    pub created_at: [u8; 32],
+    // pub author: [u128; 2], // Pubkey
 }
 
 #[event]
 pub struct ClearSignal {
-    pub market: Market,
+    pub market_left: Ticker,
+    pub market_right: Ticker,
     /// LONG = 0 | SHORT = 1
     pub side: u8,
     pub entry: Entry,
@@ -238,7 +243,11 @@ pub struct ClearSignal {
     pub leverage: u64,
     pub venue: u8,
     pub timeframe: u64,
-    pub metadata_pubkey: Pubkey,
+    // -- clear values
+    pub season_id: u64,
+    pub number: u64,
+    pub created_at: i64,
+    // pub author: Pubkey,
 }
 
 #[event]
@@ -405,14 +414,6 @@ pub struct EncryptSignal<'info> {
         // has to be on 1 line
         seeds = [Signal::SEED, trader.key().as_ref(), season.id.to_le_bytes().as_ref(), season.count.to_le_bytes().as_ref()], bump)]
     pub signal: Account<'info, Signal>,
-
-    #[account(
-        init_if_needed,
-        payer = trader,
-        space = 8 + SignalMetaData::INIT_SPACE,
-        // has to be on 1 line
-        seeds = [SignalMetaData::SEED, trader.key().as_ref(), season.id.to_le_bytes().as_ref(), season.count.to_le_bytes().as_ref()], bump)]
-    pub signal_metadata: Account<'info, SignalMetaData>,
 }
 
 // #################################################
@@ -484,8 +485,6 @@ pub struct DecryptSignal<'info> {
     pub follower_pass: Box<Account<'info, SubscriptionPass>>,
 
     pub signal: Box<Account<'info, Signal>>,
-
-    pub signal_metadata: Box<Account<'info, SignalMetaData>>,
 
     #[account(
     init_if_needed,
@@ -617,8 +616,6 @@ pub struct RevealSignal<'info> {
     pub season: Box<Account<'info, Season>>,
 
     pub signal: Box<Account<'info, Signal>>,
-
-    pub signal_metadata: Box<Account<'info, SignalMetaData>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -1062,7 +1059,8 @@ pub mod shingo_program {
     #[allow(clippy::too_many_arguments)]
     pub fn encrypt_signal(
         ctx: Context<EncryptSignal>,
-        market: [[u8; 32]; 2],
+        market_left: [u8; 32],
+        market_right: [u8; 32],
         side: [u8; 32],
         entry: [[u8; 32]; 2],
         stop_loss: [u8; 32],
@@ -1071,11 +1069,11 @@ pub mod shingo_program {
         leverage: [u8; 32],
         venue: [u8; 32],
         timeframe: [u8; 32],
-        signal_metadata_pubkey: [u8; 32],
     ) -> Result<()> {
         let signal = &mut ctx.accounts.signal;
 
-        signal.market = market;
+        signal.market_left = market_left;
+        signal.market_right = market_right;
         signal.side = side;
         signal.entry = entry;
         signal.stop_loss = stop_loss;
@@ -1084,15 +1082,11 @@ pub mod shingo_program {
         signal.leverage = leverage;
         signal.venue = venue;
         signal.timeframe = timeframe;
-        signal.metadata_pubkey = signal_metadata_pubkey;
-
-        let signal_metadata = &mut ctx.accounts.signal_metadata;
-
-        signal_metadata.season_id = ctx.accounts.season.id;
-        signal_metadata.created_at = Clock::get()?.unix_timestamp;
-        signal_metadata.number = ctx.accounts.season.count;
-        signal_metadata.signal_pubkey = signal.key();
-        signal_metadata.author = ctx.accounts.trader.key();
+        // --- clear values
+        signal.number = ctx.accounts.season.count;
+        signal.season_id = ctx.accounts.season.id;
+        signal.created_at = Clock::get()?.unix_timestamp;
+        // signal.author = ctx.accounts.trader.key();
 
         let season = &mut ctx.accounts.season;
 
@@ -1161,6 +1155,8 @@ pub mod shingo_program {
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
+        msg!("queuing {} arguments", { args.args.len() });
+
         queue_computation(
             ctx.accounts,
             computation_offset,
@@ -1191,11 +1187,9 @@ pub mod shingo_program {
             return Err(ShingoProgramError::AbortedComputation.into());
         };
 
-        let market = {
-            let market = &my_output.ciphertexts[0..2];
-            let market = to_market(market).ok_or(ShingoProgramError::BytemuckFailure)?;
-            market
-        };
+        let market_left = my_output.ciphertexts[0];
+
+        let market_right = my_output.ciphertexts[1];
 
         let side = my_output.ciphertexts[2];
 
@@ -1215,11 +1209,16 @@ pub mod shingo_program {
 
         let timeframe = my_output.ciphertexts[11];
 
-        let metadata_pubkey = my_output.ciphertexts[12];
+        let season_id = my_output.ciphertexts[12];
+
+        let number = my_output.ciphertexts[13];
+
+        let created_at = my_output.ciphertexts[14];
 
         emit!(ObservableSignal {
             nonce: my_output.nonce.to_le_bytes(),
-            market,
+            market_left,
+            market_right,
             side,
             entry,
             stop_loss,
@@ -1228,7 +1227,11 @@ pub mod shingo_program {
             leverage,
             venue,
             timeframe,
-            metadata_pubkey,
+            // -- clear values
+            season_id,
+            number,
+            created_at,
+            // author: Pubkey,
         });
 
         Ok(())
@@ -1263,7 +1266,7 @@ pub mod shingo_program {
         receiver_nonce: u128,
     ) -> Result<()> {
         require!(
-            (ctx.accounts.season.id == ctx.accounts.signal_metadata.season_id)
+            (ctx.accounts.season.id == ctx.accounts.signal.season_id)
                 && !ctx.accounts.season.is_active,
             ShingoProgramError::Nono
         );
@@ -1311,25 +1314,25 @@ pub mod shingo_program {
         };
 
         emit!(ClearSignal {
-            market: Market {
-                left: my_output.field_0.field_0,
-                right: my_output.field_0.field_1
-            },
-            side: my_output.field_1,
+            market_left: my_output.field_0,
+            market_right: my_output.field_1,
+            side: my_output.field_2,
             entry: Entry {
-                kind: my_output.field_2.field_0,
-                price: my_output.field_2.field_1
+                kind: my_output.field_3.field_0,
+                price: my_output.field_3.field_1
             },
-            stop_loss: my_output.field_3,
+            stop_loss: my_output.field_4,
             profit_points: ProfitPoint {
-                price: my_output.field_4.field_0,
-                size_pourcentage: my_output.field_4.field_1
+                price: my_output.field_5.field_0,
+                size_pourcentage: my_output.field_5.field_1
             },
-            size_usd: my_output.field_5,
-            leverage: my_output.field_6,
-            venue: my_output.field_7,
-            timeframe: my_output.field_8,
-            metadata_pubkey: my_output.field_9.into(),
+            size_usd: my_output.field_6,
+            leverage: my_output.field_7,
+            venue: my_output.field_8,
+            timeframe: my_output.field_9,
+            season_id: my_output.field_10,
+            number: my_output.field_11,
+            created_at: my_output.field_12,
         });
 
         Ok(())
