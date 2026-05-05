@@ -6,16 +6,25 @@ mod circuits {
 
     /// Ticker
     ///
-    /// SOL = 1  <br>
-    /// BTC = 2  <br>
-    /// ETH = 3  <br>
-    /// USDS (USD Sky / DAI new name) = 4  <br>
-    /// USDT = 5  <br>
-    /// USDC = 6  <br>
-    /// JupUSD = 7  <br>
-    /// EURC = 8  <br>
-    /// USDG = 9  <br>
-    /// PyUSD = 10  <br>
+    /// SOL = 1
+    ///
+    /// BTC = 2
+    ///
+    /// ETH = 3
+    ///
+    /// USDS (USD Sky / DAI new name) = 4
+    ///
+    /// USDT = 5
+    ///
+    /// USDC = 6
+    ///
+    /// JupUSD = 7
+    ///
+    /// EURC = 8
+    ///
+    /// USDG = 9
+    ///
+    /// PyUSD = 10
     pub type Ticker = u64;
 
     pub struct Signal {

@@ -273,9 +273,6 @@
       ],
       "accounts": [
         {
-          "name": "signal"
-        },
-        {
           "name": "arcium_program",
           "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         },
@@ -294,6 +291,12 @@
         {
           "name": "instructions_sysvar",
           "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "signal",
+          "docs": [
+            "Do not move"
+          ]
         }
       ],
       "args": [
@@ -1030,9 +1033,6 @@
       ],
       "accounts": [
         {
-          "name": "signal"
-        },
-        {
           "name": "arcium_program",
           "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         },
@@ -1051,6 +1051,12 @@
         {
           "name": "instructions_sysvar",
           "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "signal",
+          "docs": [
+            "Do not move"
+          ]
         }
       ],
       "args": [

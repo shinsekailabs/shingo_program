@@ -218,7 +218,7 @@ impl SubscriptionPass {
 #[event]
 pub struct ObservableSignal {
     pub nonce: [u8; 16],
-    pub metadata : Metadata,
+    pub metadata: Metadata,
     pub market_left: [u8; 32],
     pub market_right: [u8; 32],
     pub side: [u8; 32],
@@ -552,9 +552,6 @@ pub struct DecryptSignal<'info> {
 #[callback_accounts("decrypt_signal")]
 #[derive(Accounts)]
 pub struct DecryptSignalCallback<'info> {
-
-    pub signal: Box<Account<'info, Signal>>,
-
     pub arcium_program: Program<'info, Arcium>,
 
     #[account(
@@ -578,6 +575,8 @@ pub struct DecryptSignalCallback<'info> {
     #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
     /// CHECK: ``instructions_sysvar``, checked by the account constraint
     pub instructions_sysvar: AccountInfo<'info>,
+    /// Do not move
+    pub signal: Box<Account<'info, Signal>>,
 }
 
 // ################     Reveal signal       ###############
@@ -690,9 +689,6 @@ pub struct RevealSignal<'info> {
 #[callback_accounts("reveal_signal")]
 #[derive(Accounts)]
 pub struct RevealSignalCallback<'info> {
-
-    pub signal: Box<Account<'info, Signal>>,
-
     pub arcium_program: Program<'info, Arcium>,
 
     #[account(
@@ -716,6 +712,9 @@ pub struct RevealSignalCallback<'info> {
     #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
     /// CHECK: ``instructions_sysvar``, checked by the account constraint
     pub instructions_sysvar: AccountInfo<'info>,
+
+    /// Do not move
+    pub signal: Box<Account<'info, Signal>>,
 }
 
 // ###################################
@@ -888,7 +887,9 @@ pub struct PatientData {
 #[arcium_program]
 pub mod shingo_program {
 
-    use arcium_client::idl::arcium::types::{CallbackAccount, CircuitSource, OffChainCircuitSource};
+    use arcium_client::idl::arcium::types::{
+        CallbackAccount, CircuitSource, OffChainCircuitSource,
+    };
     use arcium_macros::circuit_hash;
 
     #[allow(clippy::wildcard_imports)]
@@ -1170,8 +1171,6 @@ pub mod shingo_program {
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
-        msg!("{} arguments", { args.args.len() });
-
         queue_computation(
             ctx.accounts,
             computation_offset,
@@ -1179,9 +1178,9 @@ pub mod shingo_program {
             vec![DecryptSignalCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
-                &[CallbackAccount{
+                &[CallbackAccount {
                     pubkey: ctx.accounts.signal.key(),
-                    is_writable: false,
+                    is_writable: true,
                 }],
             )?],
             1,
@@ -1306,9 +1305,9 @@ pub mod shingo_program {
             vec![RevealSignalCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
-                &[CallbackAccount{
+                &[CallbackAccount {
                     pubkey: ctx.accounts.signal.key(),
-                    is_writable: false,
+                    is_writable: true,
                 }],
             )?],
             1,
