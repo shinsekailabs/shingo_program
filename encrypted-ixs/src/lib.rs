@@ -4,11 +4,6 @@ use arcis::*;
 mod circuits {
     use arcis::*;
 
-    pub struct ProfitPoint {
-        pub price: u64,
-        pub size_pourcentage: u64,
-    }
-
     /// Ticker
     ///
     /// SOL = 1  <br>
@@ -23,29 +18,20 @@ mod circuits {
     /// PyUSD = 10  <br>
     pub type Ticker = u64;
 
-    pub struct Entry {
-        pub kind: u8,
-        pub price: u64,
-    }
-
     pub struct Signal {
         pub market_left: Ticker,
         pub market_right: Ticker,
         /// LONG = 0 | SHORT = 1
-        pub side: u8,
-        pub entry: Entry,
+        pub side: u64,
+        pub entry_kind: u64,
+        pub entry_price: u64,
         pub stop_loss: u64,
-        pub profit_points: ProfitPoint,
+        pub profit_point_price: u64,
+        pub profit_point_size_pourcentage: u64,
         pub size_usd: u64,
         pub leverage: u64,
-        pub venue: u8,
+        pub venue: u64,
         pub timeframe: u64,
-        // -- clear values
-        pub season_id: u64,
-        pub number: u64,
-        pub created_at: i64,
-        // pub author: [u8; 32] // Pubkey,
-        // pub author: [u128; 2] // Pubkey,
     }
 
     #[instruction]

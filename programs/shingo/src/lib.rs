@@ -125,52 +125,57 @@ pub enum ErrorCode {
 
 /// Ticker
 ///
-/// SOL = 1  <br>
-/// BTC = 2  <br>
-/// ETH = 3  <br>
-/// USDS (USD Sky / DAI new name) = 4  <br>
-/// USDT = 5  <br>
-/// USDC = 6  <br>
-/// ```JupUSD``` = 7  <br>
-/// EURC = 8  <br>
-/// USDG = 9  <br>
-/// ```PyUSD``` = 10  <br>
+/// SOL = 1
+///
+/// BTC = 2
+///
+/// ETH = 3
+///
+/// USDS (USD Sky / DAI new name) = 4
+///
+/// USDT = 5
+///
+/// USDC = 6
+///
+/// JupUSD = 7
+///
+/// EURC = 8
+///
+/// USDG = 9
+///
+/// PyUSD = 10
 pub type Ticker = u64;
 
-#[derive(AnchorDeserialize, AnchorSerialize, Clone)]
-pub struct ProfitPoint {
-    pub price: u64,
-    pub size_pourcentage: u64,
-}
-
-#[derive(AnchorDeserialize, AnchorSerialize, Clone)]
-pub struct Entry {
-    pub kind: u8,
-    pub price: u64,
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, InitSpace)]
+pub struct Metadata {
+    pub season_id: u64,
+    pub number: u64,
+    pub created_at: i64,
+    pub author: Pubkey,
 }
 
 #[account]
 #[derive(InitSpace)]
 pub struct Signal {
+    pub metadata: Metadata,
     pub market_left: [u8; 32],
     pub market_right: [u8; 32],
     pub side: [u8; 32],
-    pub entry: [[u8; 32]; 2],
+    pub entry_kind: [u8; 32],
+    pub entry_price: [u8; 32],
     pub stop_loss: [u8; 32],
-    pub profit_points: [[u8; 32]; 2],
+    pub profit_point_price: [u8; 32],
+    pub profit_point_size_percentage: [u8; 32],
     pub size_usd: [u8; 32],
     pub leverage: [u8; 32],
     pub venue: [u8; 32],
     pub timeframe: [u8; 32],
-    // -- clear values
-    pub season_id: u64,
-    pub number: u64,
-    pub created_at: i64,
-    // pub author: Pubkey,
 }
 
 impl Signal {
     pub const SEED: &'static [u8; 6] = b"signal";
+    pub const ARCIUM_OFFSET: usize = 8 + Metadata::INIT_SPACE;
+    pub const ARCIUM_INIT_SPACE: usize = Self::INIT_SPACE - Metadata::INIT_SPACE;
 }
 
 #[account]
@@ -213,41 +218,37 @@ impl SubscriptionPass {
 #[event]
 pub struct ObservableSignal {
     pub nonce: [u8; 16],
+    pub metadata : Metadata,
     pub market_left: [u8; 32],
     pub market_right: [u8; 32],
     pub side: [u8; 32],
-    pub entry: [[u8; 32]; 2],
+    pub entry_kind: [u8; 32],
+    pub entry_price: [u8; 32],
     pub stop_loss: [u8; 32],
-    pub profit_points: [[u8; 32]; 2],
+    pub profit_point_price: [u8; 32],
+    pub profit_point_size_percentage: [u8; 32],
     pub size_usd: [u8; 32],
     pub leverage: [u8; 32],
     pub venue: [u8; 32],
     pub timeframe: [u8; 32],
-    // -- clear values, but re-encrypted for observer
-    pub season_id: [u8; 32],
-    pub number: [u8; 32],
-    pub created_at: [u8; 32],
-    // pub author: [u128; 2], // Pubkey
 }
 
 #[event]
 pub struct ClearSignal {
+    pub metadata: Metadata,
     pub market_left: Ticker,
     pub market_right: Ticker,
     /// LONG = 0 | SHORT = 1
-    pub side: u8,
-    pub entry: Entry,
+    pub side: u64,
+    pub entry_kind: u64,
+    pub entry_price: u64,
     pub stop_loss: u64,
-    pub profit_points: ProfitPoint,
+    pub profit_point_price: u64,
+    pub profit_point_size_pourcentage: u64,
     pub size_usd: u64,
     pub leverage: u64,
-    pub venue: u8,
+    pub venue: u64,
     pub timeframe: u64,
-    // -- clear values
-    pub season_id: u64,
-    pub number: u64,
-    pub created_at: i64,
-    // pub author: Pubkey,
 }
 
 #[event]
@@ -551,6 +552,9 @@ pub struct DecryptSignal<'info> {
 #[callback_accounts("decrypt_signal")]
 #[derive(Accounts)]
 pub struct DecryptSignalCallback<'info> {
+
+    pub signal: Box<Account<'info, Signal>>,
+
     pub arcium_program: Program<'info, Arcium>,
 
     #[account(
@@ -686,6 +690,9 @@ pub struct RevealSignal<'info> {
 #[callback_accounts("reveal_signal")]
 #[derive(Accounts)]
 pub struct RevealSignalCallback<'info> {
+
+    pub signal: Box<Account<'info, Signal>>,
+
     pub arcium_program: Program<'info, Arcium>,
 
     #[account(
@@ -881,7 +888,7 @@ pub struct PatientData {
 #[arcium_program]
 pub mod shingo_program {
 
-    use arcium_client::idl::arcium::types::{CircuitSource, OffChainCircuitSource};
+    use arcium_client::idl::arcium::types::{CallbackAccount, CircuitSource, OffChainCircuitSource};
     use arcium_macros::circuit_hash;
 
     #[allow(clippy::wildcard_imports)]
@@ -1062,9 +1069,11 @@ pub mod shingo_program {
         market_left: [u8; 32],
         market_right: [u8; 32],
         side: [u8; 32],
-        entry: [[u8; 32]; 2],
+        entry_kind: [u8; 32],
+        entry_price: [u8; 32],
         stop_loss: [u8; 32],
-        profit_points: [[u8; 32]; 2],
+        profit_point_price: [u8; 32],
+        profit_point_size_percentage: [u8; 32],
         size_usd: [u8; 32],
         leverage: [u8; 32],
         venue: [u8; 32],
@@ -1075,18 +1084,20 @@ pub mod shingo_program {
         signal.market_left = market_left;
         signal.market_right = market_right;
         signal.side = side;
-        signal.entry = entry;
+        signal.entry_kind = entry_kind;
+        signal.entry_price = entry_price;
         signal.stop_loss = stop_loss;
-        signal.profit_points = profit_points;
+        signal.profit_point_price = profit_point_price;
+        signal.profit_point_size_percentage = profit_point_size_percentage;
         signal.size_usd = size_usd;
         signal.leverage = leverage;
         signal.venue = venue;
         signal.timeframe = timeframe;
         // --- clear values
-        signal.number = ctx.accounts.season.count;
-        signal.season_id = ctx.accounts.season.id;
-        signal.created_at = Clock::get()?.unix_timestamp;
-        // signal.author = ctx.accounts.trader.key();
+        signal.metadata.number = ctx.accounts.season.count;
+        signal.metadata.season_id = ctx.accounts.season.id;
+        signal.metadata.created_at = Clock::get()?.unix_timestamp;
+        signal.metadata.author = ctx.accounts.trader.key();
 
         let season = &mut ctx.accounts.season;
 
@@ -1141,7 +1152,11 @@ pub mod shingo_program {
         );
         // --------------------------------------
 
-        let init_space: u32 = Signal::INIT_SPACE
+        let init_space: u32 = Signal::ARCIUM_INIT_SPACE
+            .try_into()
+            .map_err(|_| ShingoProgramError::CastingFailure)?;
+
+        let offset: u32 = Signal::ARCIUM_OFFSET
             .try_into()
             .map_err(|_| ShingoProgramError::CastingFailure)?;
 
@@ -1150,12 +1165,12 @@ pub mod shingo_program {
             .plaintext_u128(receiver_nonce)
             .x25519_pubkey(sender_pub_key)
             .plaintext_u128(nonce)
-            .account(ctx.accounts.signal.key(), 8, init_space)
+            .account(ctx.accounts.signal.key(), offset, init_space)
             .build();
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
-        msg!("queuing {} arguments", { args.args.len() });
+        msg!("{} arguments", { args.args.len() });
 
         queue_computation(
             ctx.accounts,
@@ -1164,7 +1179,10 @@ pub mod shingo_program {
             vec![DecryptSignalCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
-                &[],
+                &[CallbackAccount{
+                    pubkey: ctx.accounts.signal.key(),
+                    is_writable: false,
+                }],
             )?],
             1,
             0,
@@ -1193,13 +1211,15 @@ pub mod shingo_program {
 
         let side = my_output.ciphertexts[2];
 
-        let entry =
-            to_entry(&my_output.ciphertexts[3..5]).ok_or(ShingoProgramError::BytemuckFailure)?;
+        let entry_kind = my_output.ciphertexts[3];
+
+        let entry_price = my_output.ciphertexts[4];
 
         let stop_loss = my_output.ciphertexts[5];
 
-        let profit_points = to_profit_points(&my_output.ciphertexts[6..8])
-            .ok_or(ShingoProgramError::BytemuckFailure)?;
+        let profit_point_price = my_output.ciphertexts[6];
+
+        let profit_point_size_percentage = my_output.ciphertexts[7];
 
         let size_usd = my_output.ciphertexts[8];
 
@@ -1209,29 +1229,21 @@ pub mod shingo_program {
 
         let timeframe = my_output.ciphertexts[11];
 
-        let season_id = my_output.ciphertexts[12];
-
-        let number = my_output.ciphertexts[13];
-
-        let created_at = my_output.ciphertexts[14];
-
         emit!(ObservableSignal {
             nonce: my_output.nonce.to_le_bytes(),
+            metadata: ctx.accounts.signal.metadata.clone(),
             market_left,
             market_right,
             side,
-            entry,
+            entry_kind,
+            entry_price,
             stop_loss,
-            profit_points,
+            profit_point_price,
+            profit_point_size_percentage,
             size_usd,
             leverage,
             venue,
             timeframe,
-            // -- clear values
-            season_id,
-            number,
-            created_at,
-            // author: Pubkey,
         });
 
         Ok(())
@@ -1266,19 +1278,23 @@ pub mod shingo_program {
         receiver_nonce: u128,
     ) -> Result<()> {
         require!(
-            (ctx.accounts.season.id == ctx.accounts.signal.season_id)
+            (ctx.accounts.season.id == ctx.accounts.signal.metadata.season_id)
                 && !ctx.accounts.season.is_active,
             ShingoProgramError::Nono
         );
         // --------------------------------------
-        let init_space: u32 = Signal::INIT_SPACE
+        let init_space: u32 = Signal::ARCIUM_INIT_SPACE
+            .try_into()
+            .map_err(|_| ShingoProgramError::CastingFailure)?;
+
+        let offset: u32 = Signal::ARCIUM_OFFSET
             .try_into()
             .map_err(|_| ShingoProgramError::CastingFailure)?;
 
         let args = ArgBuilder::new()
             .x25519_pubkey(receiver)
             .plaintext_u128(receiver_nonce)
-            .account(ctx.accounts.signal.key(), 8, init_space)
+            .account(ctx.accounts.signal.key(), offset, init_space)
             .build();
 
         ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
@@ -1290,7 +1306,10 @@ pub mod shingo_program {
             vec![RevealSignalCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
-                &[],
+                &[CallbackAccount{
+                    pubkey: ctx.accounts.signal.key(),
+                    is_writable: false,
+                }],
             )?],
             1,
             0,
@@ -1314,25 +1333,19 @@ pub mod shingo_program {
         };
 
         emit!(ClearSignal {
+            metadata: ctx.accounts.signal.metadata.clone(),
             market_left: my_output.field_0,
             market_right: my_output.field_1,
             side: my_output.field_2,
-            entry: Entry {
-                kind: my_output.field_3.field_0,
-                price: my_output.field_3.field_1
-            },
-            stop_loss: my_output.field_4,
-            profit_points: ProfitPoint {
-                price: my_output.field_5.field_0,
-                size_pourcentage: my_output.field_5.field_1
-            },
-            size_usd: my_output.field_6,
-            leverage: my_output.field_7,
-            venue: my_output.field_8,
-            timeframe: my_output.field_9,
-            season_id: my_output.field_10,
-            number: my_output.field_11,
-            created_at: my_output.field_12,
+            entry_kind: my_output.field_3,
+            entry_price: my_output.field_4,
+            stop_loss: my_output.field_5,
+            profit_point_price: my_output.field_6,
+            profit_point_size_pourcentage: my_output.field_7,
+            size_usd: my_output.field_8,
+            leverage: my_output.field_9,
+            venue: my_output.field_10,
+            timeframe: my_output.field_11,
         });
 
         Ok(())

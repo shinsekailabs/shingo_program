@@ -273,6 +273,9 @@
       ],
       "accounts": [
         {
+          "name": "signal"
+        },
+        {
           "name": "arcium_program",
           "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         },
@@ -408,16 +411,20 @@
           }
         },
         {
-          "name": "entry",
+          "name": "entry_kind",
           "type": {
             "array": [
-              {
-                "array": [
-                  "u8",
-                  32
-                ]
-              },
-              2
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "entry_price",
+          "type": {
+            "array": [
+              "u8",
+              32
             ]
           }
         },
@@ -431,16 +438,20 @@
           }
         },
         {
-          "name": "profit_points",
+          "name": "profit_point_price",
           "type": {
             "array": [
-              {
-                "array": [
-                  "u8",
-                  32
-                ]
-              },
-              2
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "profit_point_size_percentage",
+          "type": {
+            "array": [
+              "u8",
+              32
             ]
           }
         },
@@ -1018,6 +1029,9 @@
         154
       ],
       "accounts": [
+        {
+          "name": "signal"
+        },
         {
           "name": "arcium_program",
           "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
@@ -1931,6 +1945,14 @@
         "kind": "struct",
         "fields": [
           {
+            "name": "metadata",
+            "type": {
+              "defined": {
+                "name": "Metadata"
+              }
+            }
+          },
+          {
             "name": "market_left",
             "type": "u64"
           },
@@ -1943,27 +1965,27 @@
             "docs": [
               "LONG = 0 | SHORT = 1"
             ],
-            "type": "u8"
+            "type": "u64"
           },
           {
-            "name": "entry",
-            "type": {
-              "defined": {
-                "name": "Entry"
-              }
-            }
+            "name": "entry_kind",
+            "type": "u64"
+          },
+          {
+            "name": "entry_price",
+            "type": "u64"
           },
           {
             "name": "stop_loss",
             "type": "u64"
           },
           {
-            "name": "profit_points",
-            "type": {
-              "defined": {
-                "name": "ProfitPoint"
-              }
-            }
+            "name": "profit_point_price",
+            "type": "u64"
+          },
+          {
+            "name": "profit_point_size_pourcentage",
+            "type": "u64"
           },
           {
             "name": "size_usd",
@@ -1975,23 +1997,11 @@
           },
           {
             "name": "venue",
-            "type": "u8"
+            "type": "u64"
           },
           {
             "name": "timeframe",
             "type": "u64"
-          },
-          {
-            "name": "season_id",
-            "type": "u64"
-          },
-          {
-            "name": "number",
-            "type": "u64"
-          },
-          {
-            "name": "created_at",
-            "type": "i64"
           }
         ]
       }
@@ -2246,27 +2256,11 @@
                 "generics": [
                   {
                     "kind": "const",
-                    "value": "15"
+                    "value": "12"
                   }
                 ]
               }
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "Entry",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "kind",
-            "type": "u8"
-          },
-          {
-            "name": "price",
-            "type": "u64"
           }
         ]
       }
@@ -2383,6 +2377,30 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Metadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "season_id",
+            "type": "u64"
+          },
+          {
+            "name": "number",
+            "type": "u64"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "author",
+            "type": "pubkey"
           }
         ]
       }
@@ -2530,6 +2548,14 @@
             }
           },
           {
+            "name": "metadata",
+            "type": {
+              "defined": {
+                "name": "Metadata"
+              }
+            }
+          },
+          {
             "name": "market_left",
             "type": {
               "array": [
@@ -2557,16 +2583,20 @@
             }
           },
           {
-            "name": "entry",
+            "name": "entry_kind",
             "type": {
               "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "entry_price",
+            "type": {
+              "array": [
+                "u8",
+                32
               ]
             }
           },
@@ -2580,16 +2610,20 @@
             }
           },
           {
-            "name": "profit_points",
+            "name": "profit_point_price",
             "type": {
               "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "profit_point_size_percentage",
+            "type": {
+              "array": [
+                "u8",
+                32
               ]
             }
           },
@@ -2622,33 +2656,6 @@
           },
           {
             "name": "timeframe",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "season_id",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "number",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "created_at",
             "type": {
               "array": [
                 "u8",
@@ -2918,22 +2925,6 @@
       }
     },
     {
-      "name": "ProfitPoint",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "price",
-            "type": "u64"
-          },
-          {
-            "name": "size_pourcentage",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
       "name": "ReceivedPatientDataEvent",
       "type": {
         "kind": "struct",
@@ -3053,15 +3044,11 @@
           },
           {
             "name": "field_2",
-            "type": "u8"
+            "type": "u64"
           },
           {
             "name": "field_3",
-            "type": {
-              "defined": {
-                "name": "RevealSignalOutputStruct03"
-              }
-            }
+            "type": "u64"
           },
           {
             "name": "field_4",
@@ -3069,11 +3056,7 @@
           },
           {
             "name": "field_5",
-            "type": {
-              "defined": {
-                "name": "RevealSignalOutputStruct05"
-              }
-            }
+            "type": "u64"
           },
           {
             "name": "field_6",
@@ -3085,7 +3068,7 @@
           },
           {
             "name": "field_8",
-            "type": "u8"
+            "type": "u64"
           },
           {
             "name": "field_9",
@@ -3097,42 +3080,6 @@
           },
           {
             "name": "field_11",
-            "type": "u64"
-          },
-          {
-            "name": "field_12",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSignalOutputStruct03",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": "u8"
-          },
-          {
-            "name": "field_1",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSignalOutputStruct05",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": "u64"
-          },
-          {
-            "name": "field_1",
             "type": "u64"
           }
         ]
@@ -3296,6 +3243,14 @@
         "kind": "struct",
         "fields": [
           {
+            "name": "metadata",
+            "type": {
+              "defined": {
+                "name": "Metadata"
+              }
+            }
+          },
+          {
             "name": "market_left",
             "type": {
               "array": [
@@ -3323,16 +3278,20 @@
             }
           },
           {
-            "name": "entry",
+            "name": "entry_kind",
             "type": {
               "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "entry_price",
+            "type": {
+              "array": [
+                "u8",
+                32
               ]
             }
           },
@@ -3346,16 +3305,20 @@
             }
           },
           {
-            "name": "profit_points",
+            "name": "profit_point_price",
             "type": {
               "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "profit_point_size_percentage",
+            "type": {
+              "array": [
+                "u8",
+                32
               ]
             }
           },
@@ -3394,18 +3357,6 @@
                 32
               ]
             }
-          },
-          {
-            "name": "season_id",
-            "type": "u64"
-          },
-          {
-            "name": "number",
-            "type": "u64"
-          },
-          {
-            "name": "created_at",
-            "type": "i64"
           }
         ]
       }
