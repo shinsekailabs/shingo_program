@@ -118,7 +118,7 @@ pub enum ShingoProgramError {
     #[msg("Cannot close a season until it reaches its minimum number of episodes")]
     CannotCloseSeasonUntilMinimumNumberOfEpisodesIsReached,
     #[msg("This signal cannot be revealed because its season is not finished")]
-    SignalCannotBeRevealedBecauseItsSeasonNotFinished
+    SignalCannotBeRevealedBecauseItsSeasonNotFinished,
 }
 
 #[error_code]
@@ -438,6 +438,7 @@ pub struct SubscribeToSeason<'info> {
     pub trader_account: Account<'info, TraderAccount>,
 
     #[account(
+        mut,
         // has to be on 1 line
         seeds = [Season::SEED,trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
         bump)]
@@ -960,6 +961,16 @@ pub mod shingo_program {
 
         let follower_pass = &mut ctx.accounts.follower_pass;
         follower_pass.owner = ctx.accounts.follower.key();
+
+        // --- increase subs
+        let season = &mut ctx.accounts.season;
+
+        let new_subscribers_count = season
+            .subscribers
+            .checked_add(1)
+            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+
+        season.subscribers = new_subscribers_count;
 
         emit!(NewSubscription {
             followee: ctx.accounts.trader.key(),
