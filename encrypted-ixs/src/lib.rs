@@ -38,7 +38,7 @@ mod circuits {
         pub entry_price: u64,
         pub stop_loss: u64,
         pub profit_point_price: u64,
-        pub profit_point_size_pourcentage: u64,
+        pub profit_point_size_percentage: u64,
         pub size_usd: u64,
         pub leverage: u64,
         pub venue: u64,
