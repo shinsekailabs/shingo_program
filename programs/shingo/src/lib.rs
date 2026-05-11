@@ -925,7 +925,7 @@ pub mod shingo_program {
         let developer = &ctx.accounts.developer;
 
         require!(
-            ctx.accounts.season.subscribers <= ctx.accounts.season.spots,
+            ctx.accounts.season.subscribers < ctx.accounts.season.spots,
             ShingoProgramError::SeasonMaximumSubscribersNumberReached
         );
         require!(
