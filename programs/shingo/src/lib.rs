@@ -113,6 +113,12 @@ pub enum ShingoProgramError {
     CannotCreateNewSeasonWhileHasActiveSeason,
     #[msg("Cannot close a season while there's no active season. Create a season first")]
     CannotCloseSeasonWhileNoActiveSeason,
+    #[msg("This season has reached its maximum number of subscribers")]
+    SeasonMaximumSubscribersNumberReached,
+    #[msg("Cannot close a season until it reaches its minimum number of episodes")]
+    CannotCloseSeasonUntilMinimumNumberOfEpisodesIsReached,
+    #[msg("This signal cannot be revealed because its season is not finished")]
+    SignalCannotBeRevealedBecauseItsSeasonNotFinished
 }
 
 #[error_code]
@@ -144,6 +150,8 @@ pub enum ErrorCode {
 /// USDG = 9
 ///
 /// PyUSD = 10
+///
+/// hyUSD = 11
 pub type Ticker = u64;
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone, InitSpace)]
@@ -193,10 +201,15 @@ impl TraderAccount {
 #[account]
 #[derive(InitSpace)]
 pub struct Season {
+    pub trader: Pubkey,
     pub subscription_price: u64,
     pub id: u64,
     pub is_active: bool,
+    // count will be renamed 'episodes' later
     pub count: u64,
+    pub minimum_number_of_episodes: u64,
+    pub spots: u64,
+    pub subscribers: u64,
 }
 
 impl Season {
@@ -211,6 +224,39 @@ pub struct SubscriptionPass {
 
 impl SubscriptionPass {
     pub const SEED: &'static [u8; 17] = b"subscription_pass";
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct RevealedSignal {
+    pub metadata: Metadata,
+    pub market_left: u64,
+    pub market_right: u64,
+    /// LONG = 0 | SHORT = 1
+    pub side: u64,
+    pub entry_kind: u64,
+    pub entry_price: u64,
+    pub stop_loss: u64,
+    pub profit_point_price: u64,
+    pub profit_point_size_pourcentage: u64,
+    pub size_usd: u64,
+    pub leverage: u64,
+    pub venue: u64,
+    pub timeframe: u64,
+}
+
+impl RevealedSignal {
+    pub const SEED: &'static [u8; 8] = b"revealed";
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct SeasonEscrow {
+    pub bump: u8,
+}
+
+impl SeasonEscrow {
+    pub const SEED: &'static [u8; 13] = b"season_escrow";
 }
 
 // ############# Events ###############
@@ -318,6 +364,15 @@ pub struct InitializeSeason<'info> {
     #[account(
         init,
         payer = trader,
+        space = 8 + SeasonEscrow::INIT_SPACE,
+        seeds = [SeasonEscrow::SEED, trader.key().as_ref(),trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season).to_le_bytes().as_ref()],
+        bump
+    )]
+    pub season_escrow: Account<'info, SeasonEscrow>,
+
+    #[account(
+        init,
+        payer = trader,
         space = 8 + SubscriptionPass::INIT_SPACE,
         seeds = [SubscriptionPass::SEED, DEVELOPER_ADDRESS.to_bytes().as_ref(), trader.key().as_ref(),trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season).to_le_bytes().as_ref()],
         bump
@@ -333,7 +388,11 @@ pub struct InitializeSeason<'info> {
     )]
     pub trader_pass: Account<'info, SubscriptionPass>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [TraderAccount::SEED, trader.key().as_ref()],
+        bump
+    )]
     pub trader_account: Account<'info, TraderAccount>,
 
     #[account(
@@ -361,6 +420,13 @@ pub struct SubscribeToSeason<'info> {
         bump
     )]
     pub follower_pass: Account<'info, SubscriptionPass>,
+
+    #[account(
+        mut,
+        seeds = [SeasonEscrow::SEED, trader.key().as_ref(),trader_account.current_season.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub season_escrow: Account<'info, SeasonEscrow>,
 
     #[account(mut)]
     pub trader: SystemAccount<'info>,
@@ -394,6 +460,13 @@ pub struct CloseSeason<'info> {
         seeds = [Season::SEED, trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
         bump)]
     pub season: Account<'info, Season>,
+
+    #[account(
+        mut,
+        seeds = [SeasonEscrow::SEED, trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub season_escrow: Account<'info, SeasonEscrow>,
 }
 
 // ################# Signal ##################
@@ -620,6 +693,15 @@ pub struct RevealSignal<'info> {
 
     pub signal: Box<Account<'info, Signal>>,
 
+    #[account(
+    init_if_needed,
+    payer = payer,
+    space = 8 + RevealedSignal::INIT_SPACE,
+    seeds = [RevealedSignal::SEED, signal.metadata.author.as_ref(), signal.metadata.season_id.to_le_bytes().as_ref(), signal.metadata.number.to_le_bytes().as_ref()],
+    bump,
+    )]
+    pub revealed_signal: Box<Account<'info, RevealedSignal>>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -714,6 +796,9 @@ pub struct RevealSignalCallback<'info> {
     pub instructions_sysvar: AccountInfo<'info>,
 
     pub signal: Box<Account<'info, Signal>>,
+
+    #[account(mut)]
+    pub revealed_signal: Box<Account<'info, RevealedSignal>>,
 }
 
 // ###################################
@@ -775,7 +860,10 @@ pub mod shingo_program {
     pub fn initialize_season(
         ctx: Context<InitializeSeason>,
         subscription_price: u64,
+        maximum_spots: u64,
+        minimum_count: u64,
     ) -> Result<()> {
+        // -- guards
         require!(
             subscription_price != 0,
             ShingoProgramError::InvalidSubscriptionPrice
@@ -786,6 +874,7 @@ pub mod shingo_program {
             ShingoProgramError::CannotCreateNewSeasonWhileHasActiveSeason
         );
 
+        // --- update the trader account
         let trader_account = &mut ctx.accounts.trader_account;
         let season_number = trader_account
             .current_season
@@ -796,8 +885,11 @@ pub mod shingo_program {
         trader_account.signal_count = 0;
         trader_account.has_active_season = true;
 
+        // --- initialize the season
         let season = &mut ctx.accounts.season;
         season.subscription_price = subscription_price;
+        season.spots = maximum_spots;
+        season.minimum_number_of_episodes = minimum_count;
         season.id = season_number;
         season.is_active = true;
         season.count = 0;
@@ -805,8 +897,13 @@ pub mod shingo_program {
         let shingo_pass = &mut ctx.accounts.shingo_pass;
         shingo_pass.owner = DEVELOPER_ADDRESS;
 
+        // --- the trader is automatically subscribed to themself and get a pass
         let trader_pass = &mut ctx.accounts.trader_pass;
         trader_pass.owner = ctx.accounts.trader.key();
+
+        // --- initializing the season escrow
+        let season_escrow = &mut ctx.accounts.season_escrow;
+        season_escrow.bump = ctx.bumps.season_escrow;
 
         emit!(NewSeason {
             trader_address: ctx.accounts.trader.key(),
@@ -824,6 +921,10 @@ pub mod shingo_program {
     pub fn subscribe_to_season(ctx: Context<SubscribeToSeason>) -> Result<()> {
         let developer = &ctx.accounts.developer;
 
+        require!(
+            ctx.accounts.season.spots < ctx.accounts.season.subscribers,
+            ShingoProgramError::SeasonMaximumSubscribersNumberReached
+        );
         require!(
             developer.key().eq(&DEVELOPER_ADDRESS),
             ShingoProgramError::Nono
@@ -851,7 +952,7 @@ pub mod shingo_program {
                 ctx.accounts.system_program.to_account_info(),
                 system_program::Transfer {
                     from: ctx.accounts.follower.to_account_info(),
-                    to: ctx.accounts.trader.to_account_info(),
+                    to: ctx.accounts.season_escrow.to_account_info(),
                 },
             ),
             price,
@@ -875,16 +976,54 @@ pub mod shingo_program {
     /// Ending a season makes all its signals decryptable by everyone
     /// Errors if the trader does not have an active season
     pub fn close_season(ctx: Context<CloseSeason>) -> Result<()> {
+        // --- guards
+        // --- must the signer and trader of the season to close it
+        require!(
+            ctx.accounts.season.trader.eq(ctx.accounts.trader.key),
+            ShingoProgramError::Nono
+        );
         require!(
             ctx.accounts.trader_account.has_active_season,
             ShingoProgramError::CannotCloseSeasonWhileNoActiveSeason
         );
+        require!(
+            ctx.accounts.season.count < ctx.accounts.season.minimum_number_of_episodes,
+            ShingoProgramError::CannotCloseSeasonUntilMinimumNumberOfEpisodesIsReached
+        );
+
+        // --- updating the trader account
         let trader_account = &mut ctx.accounts.trader_account;
         trader_account.has_active_season = false;
         trader_account.signal_count = 0;
 
+        // --- updating the season
         let season = &mut ctx.accounts.season;
         season.is_active = false;
+
+        // --- pay the trader for their season
+        let transaction_signer_key = &ctx.accounts.trader.key();
+
+        let seeds = &[
+            SeasonEscrow::SEED,
+            transaction_signer_key.as_ref(),
+            &[ctx.accounts.season_escrow.bump],
+        ];
+
+        let signer_seeds = &[&seeds[..]];
+
+        let all_the_money_from_the_season = ctx.accounts.season_escrow.get_lamports();
+
+        system_program::transfer(
+            CpiContext::new_with_signer(
+                ctx.accounts.system_program.to_account_info(),
+                system_program::Transfer {
+                    from: ctx.accounts.season_escrow.to_account_info(),
+                    to: ctx.accounts.trader.to_account_info(),
+                },
+                signer_seeds,
+            ),
+            all_the_money_from_the_season,
+        )?;
 
         emit!(SeasonFinale {
             trader: ctx.accounts.trader.key(),
@@ -1115,7 +1254,7 @@ pub mod shingo_program {
         require!(
             (ctx.accounts.season.id == ctx.accounts.signal.metadata.season_id)
                 && !ctx.accounts.season.is_active,
-            ShingoProgramError::Nono
+            ShingoProgramError::SignalCannotBeRevealedBecauseItsSeasonNotFinished
         );
         // --------------------------------------
         let init_space: u32 = Signal::ARCIUM_INIT_SPACE
@@ -1141,10 +1280,16 @@ pub mod shingo_program {
             vec![RevealSignalCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
-                &[CallbackAccount {
-                    pubkey: ctx.accounts.signal.key(),
-                    is_writable: false,
-                }],
+                &[
+                    CallbackAccount {
+                        pubkey: ctx.accounts.signal.key(),
+                        is_writable: false,
+                    },
+                    CallbackAccount {
+                        pubkey: ctx.accounts.revealed_signal.key(),
+                        is_writable: true,
+                    },
+                ],
             )?],
             1,
             0,
@@ -1167,20 +1312,49 @@ pub mod shingo_program {
             return Err(ShingoProgramError::AbortedComputation.into());
         };
 
+        let revealed_signal = &mut ctx.accounts.revealed_signal;
+
+        let market_left = my_output.field_0;
+        let market_right = my_output.field_1;
+        let side = my_output.field_2;
+        let entry_kind = my_output.field_3;
+        let entry_price = my_output.field_4;
+        let stop_loss = my_output.field_5;
+        let profit_point_price = my_output.field_6;
+        let profit_point_size_pourcentage = my_output.field_7;
+        let size_usd = my_output.field_8;
+        let leverage = my_output.field_9;
+        let venue = my_output.field_10;
+        let timeframe = my_output.field_11;
+
+        revealed_signal.metadata = ctx.accounts.signal.metadata.clone();
+        revealed_signal.market_left = market_left;
+        revealed_signal.market_right = market_right;
+        revealed_signal.side = side;
+        revealed_signal.entry_kind = entry_kind;
+        revealed_signal.entry_price = entry_price;
+        revealed_signal.stop_loss = stop_loss;
+        revealed_signal.profit_point_price = profit_point_price;
+        revealed_signal.profit_point_size_pourcentage = profit_point_size_pourcentage;
+        revealed_signal.size_usd = size_usd;
+        revealed_signal.leverage = leverage;
+        revealed_signal.venue = venue;
+        revealed_signal.timeframe = timeframe;
+
         emit!(ClearSignal {
             metadata: ctx.accounts.signal.metadata.clone(),
-            market_left: my_output.field_0,
-            market_right: my_output.field_1,
-            side: my_output.field_2,
-            entry_kind: my_output.field_3,
-            entry_price: my_output.field_4,
-            stop_loss: my_output.field_5,
-            profit_point_price: my_output.field_6,
-            profit_point_size_pourcentage: my_output.field_7,
-            size_usd: my_output.field_8,
-            leverage: my_output.field_9,
-            venue: my_output.field_10,
-            timeframe: my_output.field_11,
+            market_left: market_left,
+            market_right: market_right,
+            side: side,
+            entry_kind: entry_kind,
+            entry_price: entry_price,
+            stop_loss: stop_loss,
+            profit_point_price: profit_point_price,
+            profit_point_size_pourcentage: profit_point_size_pourcentage,
+            size_usd: size_usd,
+            leverage: leverage,
+            venue: venue,
+            timeframe: timeframe,
         });
 
         Ok(())

@@ -25,6 +25,8 @@ mod circuits {
     /// USDG = 9
     ///
     /// PyUSD = 10
+    ///
+    /// hyUSD = 11
     pub type Ticker = u64;
 
     pub struct Signal {
