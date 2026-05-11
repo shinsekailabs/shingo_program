@@ -348,7 +348,7 @@ pub struct InitializeTraderAccount<'info> {
     pub trader: Signer<'info>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = trader,
         space = 8 + TraderAccount::INIT_SPACE,
         seeds = [TraderAccount::SEED, trader.key().as_ref()],
@@ -505,6 +505,7 @@ pub struct EncryptSignal<'info> {
     pub season: Account<'info, Season>,
 
     #[account(
+        // might put init_if_needed
         init,
         payer = trader,
         space = 8 + Signal::INIT_SPACE,
@@ -721,7 +722,7 @@ pub struct RevealSignal<'info> {
     pub signal: Box<Account<'info, Signal>>,
 
     #[account(
-    init,
+    init_if_needed,
     payer = payer,
     space = 8 + RevealedSignal::INIT_SPACE,
     seeds = [RevealedSignal::SEED, signal.metadata.author.as_ref(), signal.metadata.season_id.to_le_bytes().as_ref(), signal.metadata.number.to_le_bytes().as_ref()],
