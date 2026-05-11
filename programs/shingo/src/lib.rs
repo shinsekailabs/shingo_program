@@ -951,6 +951,7 @@ pub mod shingo_program {
     /// Errors if a Checked Arithmetic division fails
     #[allow(clippy::arithmetic_side_effects)]
     pub fn subscribe_to_season(ctx: Context<SubscribeToSeason>) -> Result<()> {
+        msg!("logging");
         // --- can only subscribe to an active season
         require!(ctx.accounts.season.is_active, ShingoProgramError::Nono);
 
@@ -984,11 +985,16 @@ pub mod shingo_program {
         )?;
 
         // --- put money into the season's escrow
-        **ctx
-            .accounts
-            .season_escrow
-            .to_account_info()
-            .try_borrow_mut_lamports()? += price;
+        system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                system_program::Transfer {
+                    from: ctx.accounts.follower.to_account_info(),
+                    to: ctx.accounts.season_escrow.to_account_info(),
+                },
+            ),
+            price,
+        )?;
 
         let follower_pass = &mut ctx.accounts.follower_pass;
         follower_pass.owner = ctx.accounts.follower.key();
