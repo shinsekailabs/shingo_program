@@ -41,6 +41,11 @@ Contract address / ProgramID :
 EiG5mFjoDKnBAwM2sxAcCidZJZ86HNQmq49j9pcmje4M
 ```
 
+MXE Public Key of the contract above
+```
+FsCzBotBXKNQc23dkL7nR9Q9MCKZkwzD94oeXqWTSAPf
+```
+
 Explorer link : https://explorer.solana.com/address/EiG5mFjoDKnBAwM2sxAcCidZJZ86HNQmq49j9pcmje4M?cluster=devnet
 
 Orbmarkets link : https://orbmarkets.io/address/EiG5mFjoDKnBAwM2sxAcCidZJZ86HNQmq49j9pcmje4M/history?cluster=devnet&hideSpam=true
