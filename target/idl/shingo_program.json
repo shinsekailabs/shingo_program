@@ -67,6 +67,41 @@
               }
             ]
           }
+        },
+        {
+          "name": "season_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  97,
+                  115,
+                  111,
+                  110,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              },
+              {
+                "kind": "account",
+                "path": "trader_account.current_season",
+                "account": "TraderAccount"
+              }
+            ]
+          }
         }
       ],
       "args": []
@@ -630,6 +665,41 @@
           "signer": true
         },
         {
+          "name": "season_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  97,
+                  115,
+                  111,
+                  110,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              },
+              {
+                "kind": "account",
+                "path": "trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season)",
+                "account": "TraderAccount"
+              }
+            ]
+          }
+        },
+        {
           "name": "shingo_pass",
           "writable": true,
           "pda": {
@@ -750,7 +820,26 @@
         },
         {
           "name": "trader_account",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              }
+            ]
+          }
         },
         {
           "name": "season",
@@ -784,6 +873,14 @@
       "args": [
         {
           "name": "subscription_price",
+          "type": "u64"
+        },
+        {
+          "name": "maximum_spots",
+          "type": "u64"
+        },
+        {
+          "name": "minimum_count",
           "type": "u64"
         }
       ]
@@ -865,6 +962,42 @@
         },
         {
           "name": "signal"
+        },
+        {
+          "name": "revealed_signal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  118,
+                  101,
+                  97,
+                  108,
+                  101,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signal.metadata.author",
+                "account": "Signal"
+              },
+              {
+                "kind": "account",
+                "path": "signal.metadata.season_id",
+                "account": "Signal"
+              },
+              {
+                "kind": "account",
+                "path": "signal.metadata.number",
+                "account": "Signal"
+              }
+            ]
+          }
         },
         {
           "name": "payer",
@@ -1003,6 +1136,10 @@
         },
         {
           "name": "signal"
+        },
+        {
+          "name": "revealed_signal",
+          "writable": true
         }
       ],
       "args": [
@@ -1098,6 +1235,41 @@
           }
         },
         {
+          "name": "season_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  97,
+                  115,
+                  111,
+                  110,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              },
+              {
+                "kind": "account",
+                "path": "trader_account.current_season",
+                "account": "TraderAccount"
+              }
+            ]
+          }
+        },
+        {
           "name": "trader",
           "writable": true
         },
@@ -1111,6 +1283,7 @@
         },
         {
           "name": "season",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -1220,6 +1393,19 @@
       ]
     },
     {
+      "name": "RevealedSignal",
+      "discriminator": [
+        79,
+        252,
+        213,
+        38,
+        199,
+        125,
+        156,
+        207
+      ]
+    },
+    {
       "name": "Season",
       "discriminator": [
         76,
@@ -1230,6 +1416,19 @@
         157,
         248,
         47
+      ]
+    },
+    {
+      "name": "SeasonEscrow",
+      "discriminator": [
+        30,
+        125,
+        4,
+        213,
+        76,
+        186,
+        112,
+        77
       ]
     },
     {
@@ -1407,6 +1606,21 @@
       "code": 6010,
       "name": "CannotCloseSeasonWhileNoActiveSeason",
       "msg": "Cannot close a season while there's no active season. Create a season first"
+    },
+    {
+      "code": 6011,
+      "name": "SeasonMaximumSubscribersNumberReached",
+      "msg": "This season has reached its maximum number of subscribers"
+    },
+    {
+      "code": 6012,
+      "name": "CannotCloseSeasonUntilMinimumNumberOfEpisodesIsReached",
+      "msg": "Cannot close a season until it reaches its minimum number of episodes"
+    },
+    {
+      "code": 6013,
+      "name": "SignalCannotBeRevealedBecauseItsSeasonNotFinished",
+      "msg": "This signal cannot be revealed because its season is not finished"
     }
   ],
   "types": [
@@ -2460,10 +2674,81 @@
       }
     },
     {
+      "name": "RevealedSignal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "metadata",
+            "type": {
+              "defined": {
+                "name": "Metadata"
+              }
+            }
+          },
+          {
+            "name": "market_left",
+            "type": "u64"
+          },
+          {
+            "name": "market_right",
+            "type": "u64"
+          },
+          {
+            "name": "side",
+            "docs": [
+              "LONG = 0 | SHORT = 1"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "entry_kind",
+            "type": "u64"
+          },
+          {
+            "name": "entry_price",
+            "type": "u64"
+          },
+          {
+            "name": "stop_loss",
+            "type": "u64"
+          },
+          {
+            "name": "profit_point_price",
+            "type": "u64"
+          },
+          {
+            "name": "profit_point_size_pourcentage",
+            "type": "u64"
+          },
+          {
+            "name": "size_usd",
+            "type": "u64"
+          },
+          {
+            "name": "leverage",
+            "type": "u64"
+          },
+          {
+            "name": "venue",
+            "type": "u64"
+          },
+          {
+            "name": "timeframe",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
       "name": "Season",
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "trader",
+            "type": "pubkey"
+          },
           {
             "name": "subscription_price",
             "type": "u64"
@@ -2479,6 +2764,30 @@
           {
             "name": "count",
             "type": "u64"
+          },
+          {
+            "name": "minimum_number_of_episodes",
+            "type": "u64"
+          },
+          {
+            "name": "spots",
+            "type": "u64"
+          },
+          {
+            "name": "subscribers",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeasonEscrow",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }

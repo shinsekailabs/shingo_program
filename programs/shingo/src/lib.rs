@@ -71,6 +71,8 @@ tjHQToczCXVWM+/r0FE=
 The following hackers could've stolen all our money but didn't:
 - Jojo
 - Neal-C
+- Oxfindings
+- webrainsec
 - https://shingo.finance/hall-of-fame
 "
 }
@@ -923,7 +925,7 @@ pub mod shingo_program {
         let developer = &ctx.accounts.developer;
 
         require!(
-            ctx.accounts.season.spots < ctx.accounts.season.subscribers,
+            ctx.accounts.season.subscribers <= ctx.accounts.season.spots,
             ShingoProgramError::SeasonMaximumSubscribersNumberReached
         );
         require!(
@@ -988,7 +990,7 @@ pub mod shingo_program {
     /// Errors if the trader does not have an active season
     pub fn close_season(ctx: Context<CloseSeason>) -> Result<()> {
         // --- guards
-        // --- must the signer and trader of the season to close it
+        // --- must be the signer and trader of the season to close it
         require!(
             ctx.accounts.season.trader.eq(ctx.accounts.trader.key),
             ShingoProgramError::Nono
@@ -998,7 +1000,7 @@ pub mod shingo_program {
             ShingoProgramError::CannotCloseSeasonWhileNoActiveSeason
         );
         require!(
-            ctx.accounts.season.count < ctx.accounts.season.minimum_number_of_episodes,
+            ctx.accounts.season.count >= ctx.accounts.season.minimum_number_of_episodes,
             ShingoProgramError::CannotCloseSeasonUntilMinimumNumberOfEpisodesIsReached
         );
 
