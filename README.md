@@ -81,6 +81,12 @@ Send some love so the team can deploy on mainnet ❤
 
 SOL : HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ
 
+## Our thanks
+
+Great thanks to our auditors :
+- webrainsec
+- 0xfindings
+
 ## License
 
 Licensed (c) 2025 Shinsekai Labs . Licensed under BUSL-1.1

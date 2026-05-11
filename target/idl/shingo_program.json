@@ -38,7 +38,26 @@
         },
         {
           "name": "trader_account",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              }
+            ]
+          }
         },
         {
           "name": "season",
@@ -137,7 +156,26 @@
           "name": "trader"
         },
         {
-          "name": "trader_account"
+          "name": "trader_account",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              }
+            ]
+          }
         },
         {
           "name": "follower_pass",
@@ -380,8 +418,54 @@
           "signer": true
         },
         {
+          "name": "trader_account",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              }
+            ]
+          }
+        },
+        {
           "name": "season",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  97,
+                  115,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              },
+              {
+                "kind": "account",
+                "path": "trader_account.current_season",
+                "account": "TraderAccount"
+              }
+            ]
+          }
         },
         {
           "name": "signal",
@@ -1279,7 +1363,25 @@
         },
         {
           "name": "trader_account",
-          "writable": true
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              }
+            ]
+          }
         },
         {
           "name": "season",
@@ -1621,6 +1723,16 @@
       "code": 6013,
       "name": "SignalCannotBeRevealedBecauseItsSeasonNotFinished",
       "msg": "This signal cannot be revealed because its season is not finished"
+    },
+    {
+      "code": 6014,
+      "name": "SeasonIsInactive",
+      "msg": "Season is inactive"
+    },
+    {
+      "code": 6015,
+      "name": "Sus",
+      "msg": "Sus"
     }
   ],
   "types": [
@@ -1757,7 +1869,7 @@
             "type": "u64"
           },
           {
-            "name": "profit_point_size_pourcentage",
+            "name": "profit_point_size_percentage",
             "type": "u64"
           },
           {
@@ -2718,7 +2830,7 @@
             "type": "u64"
           },
           {
-            "name": "profit_point_size_pourcentage",
+            "name": "profit_point_size_percentage",
             "type": "u64"
           },
           {
@@ -3093,10 +3205,6 @@
           {
             "name": "has_active_season",
             "type": "bool"
-          },
-          {
-            "name": "signal_count",
-            "type": "u64"
           }
         ]
       }
