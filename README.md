@@ -38,19 +38,20 @@ Traders publish trading signals ( i.e stock tips ), and these signals are the ep
 Contract address / ProgramID :
 
 ```
-EiG5mFjoDKnBAwM2sxAcCidZJZ86HNQmq49j9pcmje4M
+HX8usqWjHqHhNpn1EiCgeN4nkQXin1j6gTJrffZLmC2e
 ```
 
-MXE Public Key of the contract above
+MXE Public Key of the contract 
+
 ```
-FsCzBotBXKNQc23dkL7nR9Q9MCKZkwzD94oeXqWTSAPf
+2fAcvNwarzhcuw156vdVmXe8GWShArjaX3R8jdQxKdiz
 ```
 
-Explorer link : https://explorer.solana.com/address/EiG5mFjoDKnBAwM2sxAcCidZJZ86HNQmq49j9pcmje4M?cluster=devnet
+Explorer link : https://explorer.solana.com/address/HX8usqWjHqHhNpn1EiCgeN4nkQXin1j6gTJrffZLmC2e?cluster=devnet
 
-Orbmarkets link : https://orbmarkets.io/address/EiG5mFjoDKnBAwM2sxAcCidZJZ86HNQmq49j9pcmje4M/history?cluster=devnet&hideSpam=true
+Orbmarkets link : https://orbmarkets.io/address/HX8usqWjHqHhNpn1EiCgeN4nkQXin1j6gTJrffZLmC2e/history?cluster=devnet&hideSpam=true
 
-Solscan link : https://solscan.io/account/EiG5mFjoDKnBAwM2sxAcCidZJZ86HNQmq49j9pcmje4M?cluster=devnet
+Solscan link : https://solscan.io/account/HX8usqWjHqHhNpn1EiCgeN4nkQXin1j6gTJrffZLmC2e?cluster=devnet
 
 
 All our programs are immutable. If I forgot to make a program immutable, ping me and I'll make it immutable immediately.
@@ -85,6 +86,7 @@ SOL : HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ
 
 Great thanks to our auditors :
 - webrainsec
+- EagleEye
 - 0xfindings
 
 ## License
