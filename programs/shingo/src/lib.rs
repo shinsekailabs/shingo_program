@@ -232,29 +232,6 @@ impl SubscriptionPass {
 
 #[account]
 #[derive(InitSpace)]
-pub struct RevealedSignal {
-    pub metadata: Metadata,
-    pub market_left: u64,
-    pub market_right: u64,
-    /// LONG = 0 | SHORT = 1
-    pub side: u64,
-    pub entry_kind: u64,
-    pub entry_price: u64,
-    pub stop_loss: u64,
-    pub profit_point_price: u64,
-    pub profit_point_size_percentage: u64,
-    pub size_usd: u64,
-    pub leverage: u64,
-    pub venue: u64,
-    pub timeframe: u64,
-}
-
-impl RevealedSignal {
-    pub const SEED: &'static [u8; 8] = b"revealed";
-}
-
-#[account]
-#[derive(InitSpace)]
 pub struct SeasonEscrow {
     pub bump: u8,
 }
@@ -721,15 +698,14 @@ pub struct RevealSignal<'info> {
 
     pub signal: Box<Account<'info, Signal>>,
 
-    #[account(
-    init_if_needed,
-    payer = payer,
-    space = 8 + RevealedSignal::INIT_SPACE,
-    seeds = [RevealedSignal::SEED, signal.metadata.author.as_ref(), signal.metadata.season_id.to_le_bytes().as_ref(), signal.metadata.number.to_le_bytes().as_ref()],
-    bump,
-    )]
-    pub revealed_signal: Box<Account<'info, RevealedSignal>>,
-
+    // #[account(
+    // init_if_needed,
+    // payer = payer,
+    // space = 8 + RevealedSignal::INIT_SPACE,
+    // seeds = [RevealedSignal::SEED, signal.metadata.author.as_ref(), signal.metadata.season_id.to_le_bytes().as_ref(), signal.metadata.number.to_le_bytes().as_ref()],
+    // bump,
+    // )]
+    // pub revealed_signal: Box<Account<'info, RevealedSignal>>,
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -824,9 +800,6 @@ pub struct RevealSignalCallback<'info> {
     pub instructions_sysvar: AccountInfo<'info>,
 
     pub signal: Box<Account<'info, Signal>>,
-
-    #[account(mut)]
-    pub revealed_signal: Box<Account<'info, RevealedSignal>>,
 }
 
 // ###################################
@@ -1344,16 +1317,10 @@ pub mod shingo_program {
             vec![RevealSignalCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
-                &[
-                    CallbackAccount {
-                        pubkey: ctx.accounts.signal.key(),
-                        is_writable: false,
-                    },
-                    CallbackAccount {
-                        pubkey: ctx.accounts.revealed_signal.key(),
-                        is_writable: true,
-                    },
-                ],
+                &[CallbackAccount {
+                    pubkey: ctx.accounts.signal.key(),
+                    is_writable: false,
+                }],
             )?],
             1,
             0,
@@ -1376,8 +1343,6 @@ pub mod shingo_program {
             return Err(ShingoProgramError::AbortedComputation.into());
         };
 
-        let revealed_signal = &mut ctx.accounts.revealed_signal;
-
         let market_left = my_output.field_0;
         let market_right = my_output.field_1;
         let side = my_output.field_2;
@@ -1390,20 +1355,6 @@ pub mod shingo_program {
         let leverage = my_output.field_9;
         let venue = my_output.field_10;
         let timeframe = my_output.field_11;
-
-        revealed_signal.metadata = ctx.accounts.signal.metadata.clone();
-        revealed_signal.market_left = market_left;
-        revealed_signal.market_right = market_right;
-        revealed_signal.side = side;
-        revealed_signal.entry_kind = entry_kind;
-        revealed_signal.entry_price = entry_price;
-        revealed_signal.stop_loss = stop_loss;
-        revealed_signal.profit_point_price = profit_point_price;
-        revealed_signal.profit_point_size_percentage = profit_point_size_percentage;
-        revealed_signal.size_usd = size_usd;
-        revealed_signal.leverage = leverage;
-        revealed_signal.venue = venue;
-        revealed_signal.timeframe = timeframe;
 
         emit!(ClearSignal {
             metadata: ctx.accounts.signal.metadata.clone(),
