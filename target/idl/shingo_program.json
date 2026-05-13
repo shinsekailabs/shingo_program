@@ -129,9 +129,11 @@
       "name": "decrypt_signal",
       "docs": [
         "# Errors",
-        "Errors if ``queue_computation`` fails",
-        "Errors if the signer of the transaction is not subbed to season",
-        "Errors if a casting operation fails"
+        "Errors if the given season is not active",
+        "Errors if the signal does not belong to the given season",
+        "Errors if the signer of the transaction is not subbed to signal's season",
+        "Errors if a casting operation fails",
+        "Errors if ``queue_computation`` fails"
       ],
       "discriminator": [
         106,
@@ -178,7 +180,7 @@
           }
         },
         {
-          "name": "follower_pass",
+          "name": "subscription_pass",
           "pda": {
             "seeds": [
               {
@@ -331,8 +333,7 @@
     {
       "name": "decrypt_signal_callback",
       "docs": [
-        "# Errors",
-        "Errors if bytemuck fails"
+        "# Errors if Arcium's Computation aborted"
       ],
       "discriminator": [
         27,
@@ -395,7 +396,9 @@
       "docs": [
         "# Errors",
         "Can error on safe arithmetic addition failure",
-        "Can theoritically error if the ``Clock`` cannot be obtained"
+        "Can theoritically error if the ``Clock`` cannot be obtained",
+        "Errors if the given season is not active",
+        "Errors if a Checked Arithmetic operation fails"
       ],
       "discriminator": [
         98,
@@ -494,7 +497,7 @@
               },
               {
                 "kind": "account",
-                "path": "season.count",
+                "path": "season.episodes",
                 "account": "Season"
               }
             ]
@@ -724,8 +727,10 @@
         "# Errors",
         "Theoritically may have an arithemic error that cause Overflow Error",
         "Called multiple times by the trader, at start of a new season",
-        "Errors if ``subscription_price`` is equal to 0",
+        "Errors if a Checked Arithmetic addition fails",
+        "Errors if ``subscription_price`` is inferior to 100 lamports",
         "Errors if the trader has an active season",
+        "Errors if the minimum number of episodes is equal to 0",
         "Errors if a Checked Arithmetic addition fails"
       ],
       "discriminator": [
@@ -777,7 +782,7 @@
               },
               {
                 "kind": "account",
-                "path": "trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season)",
+                "path": "trader_account.current_season.checked_add(1).ok_or(ShingoProgramError ::\nCheckedArithmeticFailure) ? ",
                 "account": "TraderAccount"
               }
             ]
@@ -853,7 +858,7 @@
               },
               {
                 "kind": "account",
-                "path": "trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season)",
+                "path": "trader_account.current_season.checked_add(1).ok_or(ShingoProgramError ::\nCheckedArithmeticFailure) ? ",
                 "account": "TraderAccount"
               }
             ]
@@ -896,7 +901,7 @@
               },
               {
                 "kind": "account",
-                "path": "trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season)",
+                "path": "trader_account.current_season.checked_add(1).ok_or(ShingoProgramError ::\nCheckedArithmeticFailure) ? ",
                 "account": "TraderAccount"
               }
             ]
@@ -947,7 +952,7 @@
               },
               {
                 "kind": "account",
-                "path": "trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season)",
+                "path": "trader_account.current_season.checked_add(1).ok_or(ShingoProgramError ::\nCheckedArithmeticFailure) ? ",
                 "account": "TraderAccount"
               }
             ]
@@ -964,7 +969,7 @@
           "type": "u64"
         },
         {
-          "name": "minimum_count",
+          "name": "minimum_episode_count",
           "type": "u64"
         }
       ]
@@ -1026,9 +1031,9 @@
       "name": "reveal_signal",
       "docs": [
         "# Errors",
-        "Errors if ``queue_computation`` fails",
         "Errors if the signal's season is active",
-        "Errors if the signal's season isn't matching the user given season"
+        "Errors if the signal's season isn't matching the user given season",
+        "Errors if ``queue_computation`` fails"
       ],
       "discriminator": [
         224,
@@ -1276,7 +1281,7 @@
           "signer": true
         },
         {
-          "name": "follower_pass",
+          "name": "subscription_pass",
           "writable": true,
           "pda": {
             "seeds": [
@@ -2874,7 +2879,7 @@
             "type": "bool"
           },
           {
-            "name": "count",
+            "name": "episodes",
             "type": "u64"
           },
           {
@@ -2882,7 +2887,7 @@
             "type": "u64"
           },
           {
-            "name": "spots",
+            "name": "maximum_subscribers",
             "type": "u64"
           },
           {

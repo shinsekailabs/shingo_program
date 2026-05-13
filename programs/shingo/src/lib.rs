@@ -209,10 +209,9 @@ pub struct Season {
     pub subscription_price: u64,
     pub id: u64,
     pub is_active: bool,
-    // count will be renamed 'episodes' later
-    pub count: u64,
+    pub episodes: u64,
     pub minimum_number_of_episodes: u64,
-    pub spots: u64,
+    pub maximum_subscribers: u64,
     pub subscribers: u64,
 }
 
@@ -369,7 +368,7 @@ pub struct InitializeSeason<'info> {
         init,
         payer = trader,
         space = 8 + SeasonEscrow::INIT_SPACE,
-        seeds = [SeasonEscrow::SEED, trader.key().as_ref(),trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season).to_le_bytes().as_ref()],
+        seeds = [SeasonEscrow::SEED, trader.key().as_ref(),trader_account.current_season.checked_add(1).ok_or(ShingoProgramError::CheckedArithmeticFailure)?.to_le_bytes().as_ref()],
         bump
     )]
     pub season_escrow: Account<'info, SeasonEscrow>,
@@ -378,7 +377,7 @@ pub struct InitializeSeason<'info> {
         init,
         payer = trader,
         space = 8 + SubscriptionPass::INIT_SPACE,
-        seeds = [SubscriptionPass::SEED, DEVELOPER_ADDRESS.to_bytes().as_ref(), trader.key().as_ref(),trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season).to_le_bytes().as_ref()],
+        seeds = [SubscriptionPass::SEED, DEVELOPER_ADDRESS.to_bytes().as_ref(), trader.key().as_ref(),trader_account.current_season.checked_add(1).ok_or(ShingoProgramError::CheckedArithmeticFailure)?.to_le_bytes().as_ref()],
         bump
     )]
     pub shingo_pass: Account<'info, SubscriptionPass>,
@@ -387,7 +386,7 @@ pub struct InitializeSeason<'info> {
         init,
         payer = trader,
         space = 8 + SubscriptionPass::INIT_SPACE,
-        seeds = [SubscriptionPass::SEED, trader.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season).to_le_bytes().as_ref()],
+        seeds = [SubscriptionPass::SEED, trader.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.checked_add(1).ok_or(ShingoProgramError::CheckedArithmeticFailure)?.to_le_bytes().as_ref()],
         bump
     )]
     pub trader_pass: Account<'info, SubscriptionPass>,
@@ -404,7 +403,7 @@ pub struct InitializeSeason<'info> {
         payer = trader,
         space = 8 + Season::INIT_SPACE,
         // has to be on 1 line
-        seeds = [Season::SEED, trader.key().as_ref(), trader_account.current_season.checked_add(1).unwrap_or(trader_account.current_season).to_le_bytes().as_ref()],
+        seeds = [Season::SEED, trader.key().as_ref(), trader_account.current_season.checked_add(1).ok_or(ShingoProgramError::CheckedArithmeticFailure)?.to_le_bytes().as_ref()],
         bump)]
     pub season: Account<'info, Season>,
 }
@@ -423,7 +422,7 @@ pub struct SubscribeToSeason<'info> {
         seeds = [SubscriptionPass::SEED, follower.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
         bump
     )]
-    pub follower_pass: Account<'info, SubscriptionPass>,
+    pub subscription_pass: Account<'info, SubscriptionPass>,
 
     #[account(
         mut,
@@ -510,7 +509,7 @@ pub struct EncryptSignal<'info> {
         payer = trader,
         space = 8 + Signal::INIT_SPACE,
         // has to be on 1 line
-        seeds = [Signal::SEED, trader.key().as_ref(), season.id.to_le_bytes().as_ref(), season.count.to_le_bytes().as_ref()], bump)]
+        seeds = [Signal::SEED, trader.key().as_ref(), season.id.to_le_bytes().as_ref(), season.episodes.to_le_bytes().as_ref()], bump)]
     pub signal: Account<'info, Signal>,
 }
 
@@ -519,18 +518,6 @@ pub struct EncryptSignal<'info> {
 // #################################################
 
 // ################     Decrypt signal       ###############
-
-pub fn to_market<T: Copy + bytemuck::Pod>(input: &[T]) -> Option<[T; 2]> {
-    bytemuck::try_cast_slice(input).ok()?.first().copied()
-}
-
-pub fn to_entry<T: Copy + bytemuck::Pod>(input: &[T]) -> Option<[T; 2]> {
-    bytemuck::try_cast_slice(input).ok()?.first().copied()
-}
-
-pub fn to_profit_points<T: Copy + bytemuck::Pod>(input: &[T]) -> Option<[T; 2]> {
-    bytemuck::try_cast_slice(input).ok()?.first().copied()
-}
 
 #[init_computation_definition_accounts("decrypt_signal", payer)]
 #[derive(Accounts)]
@@ -584,7 +571,7 @@ pub struct DecryptSignal<'info> {
         seeds = [SubscriptionPass::SEED, follower.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
         bump
     )]
-    pub follower_pass: Box<Account<'info, SubscriptionPass>>,
+    pub subscription_pass: Box<Account<'info, SubscriptionPass>>,
 
     pub signal: Box<Account<'info, Signal>>,
 
@@ -881,14 +868,16 @@ pub mod shingo_program {
     /// # Errors
     /// Theoritically may have an arithemic error that cause Overflow Error
     /// Called multiple times by the trader, at start of a new season
-    /// Errors if ``subscription_price`` is equal to 0
+    /// Errors if a Checked Arithmetic addition fails
+    /// Errors if ``subscription_price`` is inferior to 100 lamports
     /// Errors if the trader has an active season
+    /// Errors if the minimum number of episodes is equal to 0
     /// Errors if a Checked Arithmetic addition fails
     pub fn initialize_season(
         ctx: Context<InitializeSeason>,
         subscription_price: u64,
         maximum_spots: u64,
-        minimum_count: u64,
+        minimum_episode_count: u64,
     ) -> Result<()> {
         // -- guards
         require!(
@@ -903,7 +892,7 @@ pub mod shingo_program {
         );
 
         // --- minimum of 1 episode per season
-        require!(minimum_count > 0, ShingoProgramError::Nono);
+        require!(minimum_episode_count != 0, ShingoProgramError::Nono);
 
         // --- update the trader account
         let trader_account = &mut ctx.accounts.trader_account;
@@ -918,13 +907,14 @@ pub mod shingo_program {
         // --- initialize the season
         let season = &mut ctx.accounts.season;
         season.subscription_price = subscription_price;
-        season.spots = maximum_spots;
-        season.minimum_number_of_episodes = minimum_count;
+        season.maximum_subscribers = maximum_spots;
+        season.minimum_number_of_episodes = minimum_episode_count;
         season.id = season_number;
         season.is_active = true;
-        season.count = 0;
+        season.episodes = 0;
         season.trader = ctx.accounts.trader.key();
 
+        // --- create the pass
         let shingo_pass = &mut ctx.accounts.shingo_pass;
         shingo_pass.owner = DEVELOPER_ADDRESS;
 
@@ -949,21 +939,25 @@ pub mod shingo_program {
     /// May fail on transfers.
     /// Errors if the developer system account given is not the actual developer of the smart contract
     /// Errors if a Checked Arithmetic division fails
-    #[allow(clippy::arithmetic_side_effects)]
     pub fn subscribe_to_season(ctx: Context<SubscribeToSeason>) -> Result<()> {
-        msg!("logging");
+        // --- can't subscribe to yourself
+        require!(
+            !ctx.accounts.follower.key.eq(ctx.accounts.trader.key),
+            ShingoProgramError::Nono
+        );
         // --- can only subscribe to an active season
         require!(ctx.accounts.season.is_active, ShingoProgramError::Nono);
 
         // --- can only subscribe if there less subscribers than spots
         require!(
-            ctx.accounts.season.subscribers < ctx.accounts.season.spots,
+            ctx.accounts.season.subscribers <= ctx.accounts.season.maximum_subscribers,
             ShingoProgramError::SeasonMaximumSubscribersNumberReached
         );
 
         let developer = &ctx.accounts.developer;
+
         require!(
-            developer.key().eq(&DEVELOPER_ADDRESS),
+            developer.key.eq(&DEVELOPER_ADDRESS),
             ShingoProgramError::Nono
         );
 
@@ -996,10 +990,11 @@ pub mod shingo_program {
             price,
         )?;
 
-        let follower_pass = &mut ctx.accounts.follower_pass;
-        follower_pass.owner = ctx.accounts.follower.key();
+        // --- create the subscription pass for the season
+        let subscription_pass = &mut ctx.accounts.subscription_pass;
+        subscription_pass.owner = ctx.accounts.follower.key();
 
-        // --- increase subs
+        // --- increase the season's subscribers
         let season = &mut ctx.accounts.season;
 
         let new_subscribers_count = season
@@ -1036,7 +1031,7 @@ pub mod shingo_program {
             ShingoProgramError::CannotCloseSeasonWhileNoActiveSeason
         );
         require!(
-            ctx.accounts.season.count >= ctx.accounts.season.minimum_number_of_episodes,
+            ctx.accounts.season.episodes >= ctx.accounts.season.minimum_number_of_episodes,
             ShingoProgramError::CannotCloseSeasonUntilMinimumNumberOfEpisodesIsReached
         );
 
@@ -1048,15 +1043,15 @@ pub mod shingo_program {
         let season = &mut ctx.accounts.season;
         season.is_active = false;
 
-        // --- pay the trader for their season
-
+        // --- compute the payout
+        // --- payout should be upheld by the invariant : subscribers * season's subscription price = payout
         let season = &ctx.accounts.season;
-
         let all_the_money_from_the_season = season
             .subscribers
             .checked_mul(season.subscription_price)
             .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
 
+        // --- pay the trader for their season
         **ctx
             .accounts
             .season_escrow
@@ -1067,7 +1062,7 @@ pub mod shingo_program {
         emit!(SeasonFinale {
             trader: ctx.accounts.trader.key(),
             season: ctx.accounts.season.id,
-            last_episode: ctx.accounts.season.count,
+            last_episode: ctx.accounts.season.episodes,
         });
 
         Ok(())
@@ -1078,6 +1073,8 @@ pub mod shingo_program {
     /// # Errors
     /// Can error on safe arithmetic addition failure
     /// Can theoritically error if the ``Clock`` cannot be obtained
+    /// Errors if the given season is not active
+    /// Errors if a Checked Arithmetic operation fails
     #[allow(clippy::too_many_arguments)]
     pub fn encrypt_signal(
         ctx: Context<EncryptSignal>,
@@ -1095,8 +1092,12 @@ pub mod shingo_program {
         timeframe: [u8; 32],
     ) -> Result<()> {
         // --- can only publish on active seasons
-        require!(ctx.accounts.season.is_active, ShingoProgramError::Nono);
+        require!(
+            ctx.accounts.season.is_active,
+            ShingoProgramError::SeasonIsInactive
+        );
 
+        // --- store the encrypted signal
         let signal = &mut ctx.accounts.signal;
 
         signal.market_left = market_left;
@@ -1111,20 +1112,21 @@ pub mod shingo_program {
         signal.leverage = leverage;
         signal.venue = venue;
         signal.timeframe = timeframe;
-        // --- clear values
-        signal.metadata.number = ctx.accounts.season.count;
+        // --- metadata values
+        signal.metadata.number = ctx.accounts.season.episodes;
         signal.metadata.season_id = ctx.accounts.season.id;
         signal.metadata.created_at = Clock::get()?.unix_timestamp;
         signal.metadata.author = ctx.accounts.trader.key();
 
+        // --- update the season
         let season = &mut ctx.accounts.season;
 
         let new_count = season
-            .count
+            .episodes
             .checked_add(1)
             .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
 
-        season.count = new_count;
+        season.episodes = new_count;
 
         Ok(())
     }
@@ -1149,9 +1151,11 @@ pub mod shingo_program {
     }
 
     /// # Errors
-    /// Errors if ``queue_computation`` fails
-    /// Errors if the signer of the transaction is not subbed to season
+    /// Errors if the given season is not active
+    /// Errors if the signal does not belong to the given season
+    /// Errors if the signer of the transaction is not subbed to signal's season
     /// Errors if a casting operation fails
+    /// Errors if ``queue_computation`` fails
     pub fn decrypt_signal(
         ctx: Context<DecryptSignal>,
         computation_offset: u64,
@@ -1182,12 +1186,12 @@ pub mod shingo_program {
             ShingoProgramError::Sus
         );
 
-        let follower_pass = &ctx.accounts.follower_pass;
+        let subscription_pass = &ctx.accounts.subscription_pass;
 
-        let owner = follower_pass.owner;
+        let owner = subscription_pass.owner;
 
         require!(
-            owner.eq(ctx.accounts.follower.key),
+            ctx.accounts.follower.key.eq(&owner),
             ShingoProgramError::NotSubbed
         );
         // --------------------------------------
@@ -1229,8 +1233,7 @@ pub mod shingo_program {
         Ok(())
     }
 
-    /// # Errors
-    /// Errors if bytemuck fails
+    /// # Errors if Arcium's Computation aborted
     #[arcium_callback(encrypted_ix = "decrypt_signal")]
     pub fn decrypt_signal_callback(
         ctx: Context<DecryptSignalCallback>,
@@ -1306,9 +1309,9 @@ pub mod shingo_program {
     }
 
     /// # Errors
-    /// Errors if ``queue_computation`` fails
     /// Errors if the signal's season is active
     /// Errors if the signal's season isn't matching the user given season
+    /// Errors if ``queue_computation`` fails
     pub fn reveal_signal(
         ctx: Context<RevealSignal>,
         computation_offset: u64,
