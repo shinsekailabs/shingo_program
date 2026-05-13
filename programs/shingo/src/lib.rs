@@ -347,7 +347,7 @@ pub struct InitializeTraderAccount<'info> {
     pub trader: Signer<'info>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = trader,
         space = 8 + TraderAccount::INIT_SPACE,
         seeds = [TraderAccount::SEED, trader.key().as_ref()],
@@ -504,7 +504,6 @@ pub struct EncryptSignal<'info> {
     pub season: Account<'info, Season>,
 
     #[account(
-        // might put init_if_needed
         init,
         payer = trader,
         space = 8 + Signal::INIT_SPACE,
@@ -568,7 +567,7 @@ pub struct DecryptSignal<'info> {
     pub trader_account: Box<Account<'info, TraderAccount>>,
 
     #[account(
-        seeds = [SubscriptionPass::SEED, follower.key().as_ref() ,trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
+        seeds = [SubscriptionPass::SEED, follower.key().as_ref() ,trader.key().as_ref(), signal.metadata.season_id.to_le_bytes().as_ref()],
         bump
     )]
     pub subscription_pass: Box<Account<'info, SubscriptionPass>>,
@@ -704,7 +703,13 @@ pub struct InitRevealSignalCompDef<'info> {
 #[derive(Accounts)]
 #[instruction(computation_offset: u64)]
 pub struct RevealSignal<'info> {
-    pub season: Box<Account<'info, Season>>,
+    pub trader: SystemAccount<'info>,
+
+    #[account(
+        seeds = [TraderAccount::SEED, trader.key().as_ref()],
+        bump
+    )]
+    pub trader_account: Account<'info, TraderAccount>,
 
     pub signal: Box<Account<'info, Signal>>,
 
@@ -1024,12 +1029,22 @@ pub mod shingo_program {
         // --- must be the signer and trader of the season to close it
         require!(
             ctx.accounts.season.trader.eq(ctx.accounts.trader.key),
-            ShingoProgramError::Nono
+            ShingoProgramError::Sus
         );
+
+        // --- trader's season must be active
         require!(
             ctx.accounts.trader_account.has_active_season,
             ShingoProgramError::CannotCloseSeasonWhileNoActiveSeason
         );
+
+        // --- season to be closed must be the current season
+        require!(
+            ctx.accounts.season.id == ctx.accounts.trader_account.current_season,
+            ShingoProgramError::Nono
+        );
+
+        // --- the promised minimum number of episodes must be reached or exceeded
         require!(
             ctx.accounts.season.episodes >= ctx.accounts.season.minimum_number_of_episodes,
             ShingoProgramError::CannotCloseSeasonUntilMinimumNumberOfEpisodesIsReached
@@ -1164,27 +1179,26 @@ pub mod shingo_program {
         sender_pub_key: [u8; 32],
         nonce: u128,
     ) -> Result<()> {
+        // --- guards
+        let season = &ctx.accounts.season;
+        let signal = &ctx.accounts.signal;
+        let trader_account = &ctx.accounts.trader_account;
         // --- can only decrypt signals of active seasons
-        require!(
-            ctx.accounts.season.is_active,
-            ShingoProgramError::SeasonIsInactive
-        );
+        require!(season.is_active, ShingoProgramError::SeasonIsInactive);
 
         // --- signal must belong to the current season
         require!(
-            ctx.accounts.signal.metadata.season_id == ctx.accounts.trader_account.current_season,
-            ShingoProgramError::Sus
+            signal.metadata.season_id == trader_account.current_season,
+            ShingoProgramError::Nono
         );
 
         // --- shit must not be sus
         require!(
-            ctx.accounts
-                .signal
-                .metadata
-                .author
-                .eq(ctx.accounts.trader.key),
+            signal.metadata.author.eq(ctx.accounts.trader.key),
             ShingoProgramError::Sus
         );
+
+        // --- transaction signer must own the given subscription pass
 
         let subscription_pass = &ctx.accounts.subscription_pass;
 
@@ -1318,11 +1332,24 @@ pub mod shingo_program {
         receiver: [u8; 32],
         receiver_nonce: u128,
     ) -> Result<()> {
+        // --- guards
+        let signal = &ctx.accounts.signal;
+        let trader_account = &ctx.accounts.trader_account;
+
+        // --- signal's season_id must be a previous season OR signal's season is the trader's current season that has closed.
         require!(
-            (ctx.accounts.season.id == ctx.accounts.signal.metadata.season_id)
-                && !ctx.accounts.season.is_active,
-            ShingoProgramError::SignalCannotBeRevealedBecauseItsSeasonNotFinished
+            signal.metadata.season_id < trader_account.current_season
+                || (signal.metadata.season_id == trader_account.current_season
+                    && !trader_account.has_active_season),
+            ShingoProgramError::Nono
         );
+
+        // --- signal to be revealed must authored by the given trader
+        require!(
+            signal.metadata.author.eq(ctx.accounts.trader.key),
+            ShingoProgramError::Sus
+        );
+
         // --------------------------------------
         let init_space: u32 = Signal::ARCIUM_INIT_SPACE
             .try_into()

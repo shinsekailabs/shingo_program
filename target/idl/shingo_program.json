@@ -215,8 +215,8 @@
               },
               {
                 "kind": "account",
-                "path": "trader_account.current_season",
-                "account": "TraderAccount"
+                "path": "signal.metadata.season_id",
+                "account": "Signal"
               }
             ]
           }
@@ -1047,7 +1047,29 @@
       ],
       "accounts": [
         {
-          "name": "season"
+          "name": "trader"
+        },
+        {
+          "name": "trader_account",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  97,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "trader"
+              }
+            ]
+          }
         },
         {
           "name": "signal"
