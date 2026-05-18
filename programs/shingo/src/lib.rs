@@ -231,9 +231,7 @@ impl SubscriptionPass {
 
 #[account]
 #[derive(InitSpace)]
-pub struct SeasonEscrow {
-    pub bump: u8,
-}
+pub struct SeasonEscrow;
 
 impl SeasonEscrow {
     pub const SEED: &'static [u8; 13] = b"season_escrow";
@@ -926,10 +924,6 @@ pub mod shingo_program {
         // --- the trader is automatically subscribed to themself and get a pass
         let trader_pass = &mut ctx.accounts.trader_pass;
         trader_pass.owner = ctx.accounts.trader.key();
-
-        // --- initializing the season escrow
-        let season_escrow = &mut ctx.accounts.season_escrow;
-        season_escrow.bump = ctx.bumps.season_escrow;
 
         emit!(NewSeason {
             trader_address: ctx.accounts.trader.key(),

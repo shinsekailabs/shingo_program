@@ -2922,13 +2922,7 @@
     {
       "name": "SeasonEscrow",
       "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
+        "kind": "struct"
       }
     },
     {
