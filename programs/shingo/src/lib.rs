@@ -1,3 +1,5 @@
+#![allow(clippy::diverging_sub_expression)]
+
 use anchor_lang::prelude::Pubkey;
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
@@ -126,12 +128,6 @@ pub enum ShingoProgramError {
     Sus,
 }
 
-#[error_code]
-pub enum ErrorCode {
-    #[msg("Cluster not set")]
-    ClusterNotSet,
-}
-
 // ############# Accounts and types ###############
 
 /// Ticker
@@ -213,6 +209,7 @@ pub struct Season {
     pub minimum_number_of_episodes: u64,
     pub maximum_subscribers: u64,
     pub subscribers: u64,
+    pub last_seen: i64,
 }
 
 impl Season {
@@ -227,6 +224,16 @@ pub struct SubscriptionPass {
 
 impl SubscriptionPass {
     pub const SEED: &'static [u8; 17] = b"subscription_pass";
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct ClaimPass {
+    pub claimed: bool,
+}
+
+impl ClaimPass {
+    pub const SEED: &'static [u8; 10] = b"claim_pass";
 }
 
 #[account]
@@ -324,6 +331,12 @@ pub struct NewTrader {
     pub public_key: Pubkey,
 }
 
+#[event]
+pub struct ForciblyClosedSeason {
+    pub trader: Pubkey,
+    pub season: u64,
+}
+
 // ##########################################
 // ######### Anchor Contexts     ############
 // - InitializeTraderAccount
@@ -400,7 +413,6 @@ pub struct InitializeSeason<'info> {
         init,
         payer = trader,
         space = 8 + Season::INIT_SPACE,
-        // has to be on 1 line
         seeds = [Season::SEED, trader.key().as_ref(), trader_account.current_season.checked_add(1).ok_or(ShingoProgramError::CheckedArithmeticFailure)?.to_le_bytes().as_ref()],
         bump)]
     pub season: Account<'info, Season>,
@@ -465,7 +477,6 @@ pub struct CloseSeason<'info> {
 
     #[account(
         mut,
-        // has to be on 1 line
         seeds = [Season::SEED, trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
         bump
     )]
@@ -477,6 +488,49 @@ pub struct CloseSeason<'info> {
         bump
     )]
     pub season_escrow: Account<'info, SeasonEscrow>,
+}
+
+#[derive(Accounts)]
+#[instruction(season_id: u64)]
+pub struct Refund<'info> {
+    pub system_program: Program<'info, System>,
+
+    #[account(mut)]
+    pub signer: Signer<'info>,
+
+    pub trader: SystemAccount<'info>,
+
+    #[account(
+        mut,
+        seeds = [Season::SEED, trader.key().as_ref(), season_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub season: Account<'info, Season>,
+
+    #[account(
+        mut,
+        seeds = [SeasonEscrow::SEED, trader.key().as_ref(), season_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub season_escrow: Account<'info, SeasonEscrow>,
+
+    #[account(
+        init,
+        payer = signer,
+        space = 8 + SubscriptionPass::INIT_SPACE,
+        seeds = [SubscriptionPass::SEED, signer.key().as_ref() ,trader.key().as_ref(), season_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub subscription_pass: Account<'info, SubscriptionPass>,
+
+    #[account(
+        init,
+        payer = signer,
+        space = 8 + ClaimPass::INIT_SPACE,
+        seeds = [ClaimPass::SEED, signer.key().as_ref() ,trader.key().as_ref(), season_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub claim_pass: Account<'info, ClaimPass>,
 }
 
 // ################# Signal ##################
@@ -587,21 +641,21 @@ pub struct DecryptSignal<'info> {
 
     #[account(
         mut,
-        address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_mempool_pda!(mxe_account)
     )]
     /// CHECK: ``mempool_account``, checked by the arcium program.
     pub mempool_account: UncheckedAccount<'info>,
 
     #[account(
         mut,
-        address = derive_execpool_pda!(mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_execpool_pda!(mxe_account)
     )]
     /// CHECK: ``executing_pool``, checked by the arcium program.
     pub executing_pool: UncheckedAccount<'info>,
 
     #[account(
         mut,
-        address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_comp_pda!(computation_offset, mxe_account)
     )]
     /// CHECK: ``computation_account``, checked by the arcium program.
     pub computation_account: UncheckedAccount<'info>,
@@ -613,7 +667,7 @@ pub struct DecryptSignal<'info> {
 
     #[account(
         mut,
-        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_cluster_pda!(mxe_account)
     )]
     pub cluster_account: Box<Account<'info, Cluster>>,
 
@@ -653,13 +707,13 @@ pub struct DecryptSignalCallback<'info> {
     pub computation_account: UncheckedAccount<'info>,
 
     #[account(
-        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_cluster_pda!(mxe_account)
     )]
     pub cluster_account: Box<Account<'info, Cluster>>,
 
-    #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
+    #[account(address = ::arcium_anchor::solana_instructions_sysvar::ID)]
     /// CHECK: ``instructions_sysvar``, checked by the account constraint
-    pub instructions_sysvar: AccountInfo<'info>,
+    pub instructions_sysvar: UncheckedAccount<'info>,
 
     pub signal: Box<Account<'info, Signal>>,
 }
@@ -740,21 +794,21 @@ pub struct RevealSignal<'info> {
 
     #[account(
         mut,
-        address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_mempool_pda!(mxe_account)
     )]
     /// CHECK: ``mempool_account``, checked by the arcium program
     pub mempool_account: UncheckedAccount<'info>,
 
     #[account(
         mut,
-        address = derive_execpool_pda!(mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_execpool_pda!(mxe_account)
     )]
     /// CHECK: ``executing_pool``, checked by the arcium program
     pub executing_pool: UncheckedAccount<'info>,
 
     #[account(
         mut,
-        address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_comp_pda!(computation_offset, mxe_account)
     )]
     /// CHECK: ``computation_account``, checked by the arcium program.
     pub computation_account: UncheckedAccount<'info>,
@@ -766,7 +820,7 @@ pub struct RevealSignal<'info> {
 
     #[account(
         mut,
-        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_cluster_pda!(mxe_account)
     )]
     pub cluster_account: Box<Account<'info, Cluster>>,
 
@@ -805,13 +859,13 @@ pub struct RevealSignalCallback<'info> {
     pub computation_account: UncheckedAccount<'info>,
 
     #[account(
-        address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
+        address = derive_cluster_pda!(mxe_account)
     )]
     pub cluster_account: Box<Account<'info, Cluster>>,
 
-    #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
+    #[account(address = ::arcium_anchor::solana_instructions_sysvar::ID)]
     /// CHECK: ``instructions_sysvar``, checked by the account constraint
-    pub instructions_sysvar: AccountInfo<'info>,
+    pub instructions_sysvar: UncheckedAccount<'info>,
 
     pub signal: Box<Account<'info, Signal>>,
 
@@ -871,11 +925,10 @@ pub mod shingo_program {
     /// # Errors
     /// Theoritically may have an arithemic error that cause Overflow Error
     /// Called multiple times by the trader, at start of a new season
-    /// Errors if a Checked Arithmetic addition fails
+    /// Errors if a Checked Arithmetic operation fails
     /// Errors if ``subscription_price`` is inferior to 100 lamports
     /// Errors if the trader has an active season
     /// Errors if the minimum number of episodes is equal to 0
-    /// Errors if a Checked Arithmetic addition fails
     pub fn initialize_season(
         ctx: Context<InitializeSeason>,
         subscription_price: u64,
@@ -937,7 +990,10 @@ pub mod shingo_program {
     /// # Errors
     /// May fail on transfers.
     /// Errors if the developer system account given is not the actual developer of the smart contract
-    /// Errors if a Checked Arithmetic division fails
+    /// Errors if a Checked Arithmetic operation fails
+    /// Errors if a trader subscribes to themself
+    /// Errors if the season is not active
+    /// Errors if there isn't any more spots for the season ( subscribers == spots )
     pub fn subscribe_to_season(ctx: Context<SubscribeToSeason>) -> Result<()> {
         // --- can't subscribe to yourself
         require!(
@@ -949,7 +1005,7 @@ pub mod shingo_program {
 
         // --- can only subscribe if there less subscribers than spots
         require!(
-            ctx.accounts.season.subscribers <= ctx.accounts.season.maximum_subscribers,
+            ctx.accounts.season.subscribers < ctx.accounts.season.maximum_subscribers,
             ShingoProgramError::SeasonMaximumSubscribersNumberReached
         );
 
@@ -968,7 +1024,7 @@ pub mod shingo_program {
 
         system_program::transfer(
             CpiContext::new(
-                ctx.accounts.system_program.to_account_info(),
+                ctx.accounts.system_program.key(),
                 system_program::Transfer {
                     from: ctx.accounts.follower.to_account_info(),
                     to: ctx.accounts.developer.to_account_info(),
@@ -980,7 +1036,7 @@ pub mod shingo_program {
         // --- put money into the season's escrow
         system_program::transfer(
             CpiContext::new(
-                ctx.accounts.system_program.to_account_info(),
+                ctx.accounts.system_program.key(),
                 system_program::Transfer {
                     from: ctx.accounts.follower.to_account_info(),
                     to: ctx.accounts.season_escrow.to_account_info(),
@@ -1013,11 +1069,13 @@ pub mod shingo_program {
     }
 
     /// # Errors
-    /// Theoritically may have an arithemic error that cause Overflow
     /// Called multiple times by the trader, at the end a season
     /// Ending a season makes all its signals decryptable by everyone
+    /// Erros if a checked arithmetic operation fails
+    /// Errors if the signer isn't the trader of the given season
     /// Errors if the trader does not have an active season
-    #[allow(clippy::arithmetic_side_effects)]
+    /// Errors if the season to be closed isn't the current season
+    /// Errors if the minimum number of episodes hasn't been reached
     pub fn close_season(ctx: Context<CloseSeason>) -> Result<()> {
         // --- guards
         // --- must be the signer and trader of the season to close it
@@ -1065,8 +1123,20 @@ pub mod shingo_program {
             .accounts
             .season_escrow
             .to_account_info()
-            .try_borrow_mut_lamports()? -= all_the_money_from_the_season;
-        **ctx.accounts.trader.try_borrow_mut_lamports()? += all_the_money_from_the_season;
+            .try_borrow_mut_lamports()? = ctx
+            .accounts
+            .season_escrow
+            .to_account_info()
+            .try_borrow_mut_lamports()?
+            .checked_sub(all_the_money_from_the_season)
+            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+
+        **ctx.accounts.trader.try_borrow_mut_lamports()? = ctx
+            .accounts
+            .trader
+            .try_borrow_mut_lamports()?
+            .checked_add(all_the_money_from_the_season)
+            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
 
         emit!(SeasonFinale {
             trader: ctx.accounts.trader.key(),
@@ -1077,10 +1147,127 @@ pub mod shingo_program {
         Ok(())
     }
 
+    /// # Errors
+    /// Called multiple times by the trader, at the end a season
+    /// Ending a season makes all its signals decryptable by everyone
+    /// May fail to acquire the Solana's Clock
+    /// Errors if a checked arithmetic operation fails
+    /// Errors if the trader does not have an active season
+    /// Errors if the given season isn't the current season
+    /// Errors if the season has reached its minimum number of episodes
+    /// Errors if the time elapsed since last seen, is less than 31 days
+    pub fn force_close_season(ctx: Context<CloseSeason>) -> Result<()> {
+        // --- guards
+        const SECONDS_PER_MINUTE: i64 = 60;
+        const MINUTES_PER_HOUR: i64 = 60 * SECONDS_PER_MINUTE;
+        const HOURS_PER_DAY: i64 = 24 * MINUTES_PER_HOUR;
+        const THIRTY_ONE_DAYS: i64 = 31 * HOURS_PER_DAY;
+
+        let season = &ctx.accounts.season;
+
+        let now = Clock::get()?.unix_timestamp;
+        let time_elapsed = now
+            .checked_sub(season.last_seen)
+            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+
+        require!(time_elapsed >= THIRTY_ONE_DAYS, ShingoProgramError::Nono);
+
+        // --- the promised minimum number of episodes must not have been reached
+        require!(
+            season.episodes < season.minimum_number_of_episodes,
+            ShingoProgramError::CannotCloseSeasonUntilMinimumNumberOfEpisodesIsReached
+        );
+
+        // --- trader's season must be active
+        require!(
+            ctx.accounts.trader_account.has_active_season,
+            ShingoProgramError::CannotCloseSeasonWhileNoActiveSeason
+        );
+
+        // --- season to be closed must be the current season
+        require!(
+            season.id == ctx.accounts.trader_account.current_season,
+            ShingoProgramError::Nono
+        );
+
+        // --- updating the trader account
+        let trader_account = &mut ctx.accounts.trader_account;
+        trader_account.has_active_season = false;
+
+        // --- updating the season
+        let season = &mut ctx.accounts.season;
+        season.is_active = false;
+
+        // --- emit a forcibly closed season
+        emit!(ForciblyClosedSeason {
+            trader: ctx.accounts.trader.key(),
+            season: season.id,
+        });
+
+        Ok(())
+    }
+
+    /// # Errors
+    /// Theoritically may have an arithemic error that cause Overflow
+    /// Called multiple times by the followers of a season that has been forcibly closed
+    /// Ending a season makes all its signals decryptable by everyone
+    #[allow(unused_variables)]
+    pub fn claim_from_forcibly_closed_season(ctx: Context<Refund>, season_id: u64) -> Result<()> {
+        // --- guards
+        let season = &ctx.accounts.season;
+
+        // --- season must not be active
+        // --- AND
+        // --- the promised minimum number of episodes must not have been reached
+        let is_forcibly_closed_season =
+            !season.is_active && (season.episodes < season.minimum_number_of_episodes);
+
+        require!(is_forcibly_closed_season, ShingoProgramError::Sus);
+
+        let claim_pass = &ctx.accounts.claim_pass;
+
+        require!(!claim_pass.claimed, ShingoProgramError::Sus);
+
+        let subscription_pass = &ctx.accounts.subscription_pass;
+
+        let owner = subscription_pass.owner;
+
+        // --- require that the signer was a subscriber
+        require!(
+            ctx.accounts.signer.key.eq(&owner),
+            ShingoProgramError::NotSubbed
+        );
+
+        // --- refund the follower with the subscription_price ( tip isn't refunded )
+        **ctx
+            .accounts
+            .season_escrow
+            .to_account_info()
+            .try_borrow_mut_lamports()? = ctx
+            .accounts
+            .season_escrow
+            .to_account_info()
+            .try_borrow_mut_lamports()?
+            .checked_sub(season.subscription_price)
+            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+
+        **ctx.accounts.signer.try_borrow_mut_lamports()? = ctx
+            .accounts
+            .signer
+            .try_borrow_mut_lamports()?
+            .checked_add(season.subscription_price)
+            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+
+        // --- invalidate the follower claim's pass to prevent double claims
+        let claim_pass = &mut ctx.accounts.claim_pass;
+        claim_pass.claimed = true;
+
+        Ok(())
+    }
+
     // ########## Signal ###########
 
     /// # Errors
-    /// Can error on safe arithmetic addition failure
     /// Can theoritically error if the ``Clock`` cannot be obtained
     /// Errors if the given season is not active
     /// Errors if a Checked Arithmetic operation fails
@@ -1124,7 +1311,8 @@ pub mod shingo_program {
         // --- metadata values
         signal.metadata.number = ctx.accounts.season.episodes;
         signal.metadata.season_id = ctx.accounts.season.id;
-        signal.metadata.created_at = Clock::get()?.unix_timestamp;
+        let now = Clock::get()?.unix_timestamp;
+        signal.metadata.created_at = now;
         signal.metadata.author = ctx.accounts.trader.key();
 
         // --- update the season
@@ -1136,6 +1324,7 @@ pub mod shingo_program {
             .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
 
         season.episodes = new_count;
+        season.last_seen = now;
 
         Ok(())
     }
@@ -1146,15 +1335,14 @@ pub mod shingo_program {
     /// Cannot error, fn just initializes the ``comp_def``
     /// Called once by the admin
     pub fn init_decrypt_signal_comp_def(ctx: Context<InitDecryptSignalCompDef>) -> Result<()> {
-        init_comp_def(
+        init_computation_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
                 source:
                     "https://raw.githubusercontent.com/shinsekailabs/shingo_program/main/build/decrypt_signal.arcis"
                         .to_string(),
                 hash: circuit_hash!("decrypt_signal"),
-            })),
-            None,
+            }))
         )?;
         Ok(())
     }
@@ -1304,14 +1492,13 @@ pub mod shingo_program {
     /// Cannot fail
     /// Called once by the admin
     pub fn init_reveal_signal_comp_def(ctx: Context<InitRevealSignalCompDef>) -> Result<()> {
-        init_comp_def(
+        init_computation_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
                 source: "https://raw.githubusercontent.com/shinsekailabs/shingo_program/main/build/reveal_signal.arcis"
                     .to_string(),
                 hash: circuit_hash!("reveal_signal"),
-            })),
-            None,
+            }))
         )?;
         Ok(())
     }
@@ -1330,11 +1517,13 @@ pub mod shingo_program {
         let signal = &ctx.accounts.signal;
         let trader_account = &ctx.accounts.trader_account;
 
+        let is_previous_season = signal.metadata.season_id < trader_account.current_season;
+        let is_current_closed_season = signal.metadata.season_id == trader_account.current_season
+            && !trader_account.has_active_season;
+
         // --- signal's season_id must be a previous season OR signal's season is the trader's current season that has closed.
         require!(
-            signal.metadata.season_id < trader_account.current_season
-                || (signal.metadata.season_id == trader_account.current_season
-                    && !trader_account.has_active_season),
+            is_previous_season || is_current_closed_season,
             ShingoProgramError::Nono
         );
 
