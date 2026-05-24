@@ -21,14 +21,13 @@ custom-heap = []
 custom-panic = []
 
 [dependencies]
-anchor-lang = { version = "0.32.1", features = ["init-if-needed"] }
+anchor-lang = { version = "1.0.2", features = ["init-if-needed"] }
 
-arcium-client = { version = "0.9.7", default-features = false }
-arcium-macros = "0.9.7"
-arcium-anchor = "0.9.7"
+arcium-client = { version = "0.10.3", default-features = false }
+arcium-macros = "0.10.3"
+arcium-anchor = "0.10.3"
 solana-security-txt = "1.1.2"
 default-env = "0.1.1"
-bytemuck = "1.24.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "allow", check-cfg = ['cfg(target_os, values("solana"))', 'cfg(feature, values("frozen-abi", "no-entrypoint"))'] }
