@@ -93,4 +93,4 @@ Great thanks to our auditors :
 
 ## License
 
-Licensed (c) 2025 Shinsekai Labs . Licensed under BUSL-1.1
+Licensed (c) 2026 Shinsekai Labs . Licensed under BUSL-1.1
