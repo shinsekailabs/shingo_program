@@ -8,7 +8,7 @@
 
 The Shingo Program is the smart contract powering https://shingo.finance
 
-### Winner of the Solana Privacy Hackathon "Open Track" ( Winter 2026 ) 
+### Winner of the Solana Privacy Hackathon "Open Track" (Winter 2026) 
 
 Solana developers' announcement tweet : https://x.com/solana_devs/status/2022385324714856709 
 
@@ -69,6 +69,8 @@ Contract address / ProgramID :
 Explorer link : (soon)
 
 Obrmarkets link : (soon)
+
+Solscan link : (soon)
 
 All our programs are immutable. If I forgot to make a program immutable, ping me and I'll make it immutable immediately.
 
