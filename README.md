@@ -88,7 +88,7 @@ SOL : HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ
 
 ## Our thanks
 
-Great thanks to our auditors :
+Great thanks to our security auditors :
 - webrainsec
 - EagleEye
 - 0xfindings
