@@ -78,7 +78,7 @@ The following hackers could've stolen all our money but didn't:
 "
 }
 
-declare_id!("BsW6tsgxPVpdCeSwMdmtDiVdkVZspAT7Rd6DyW2o2iTj");
+declare_id!("HMGBKT1i1pJsaoQqcHXQGVb8FAbg8taPSCbKVLhnDTyY");
 
 pub const DEVELOPER_ADDRESS: Pubkey = pubkey!("HhEBDdSK7ywsesAFdMcsQjWiWVBTYbjS386TJAVibMJQ");
 
@@ -485,6 +485,36 @@ pub struct CloseSeason<'info> {
     #[account(
         mut,
         seeds = [SeasonEscrow::SEED, trader.key().as_ref(), trader_account.current_season.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub season_escrow: Account<'info, SeasonEscrow>,
+}
+
+#[derive(Accounts)]
+#[instruction(current_season: u64)]
+pub struct ForceCloseSeason<'info> {
+    pub system_program: Program<'info, System>,
+
+    #[account(mut)]
+    pub trader: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [TraderAccount::SEED, trader.key().as_ref()],
+        bump
+    )]
+    pub trader_account: Account<'info, TraderAccount>,
+
+    #[account(
+        mut,
+        seeds = [Season::SEED, trader.key().as_ref(), current_season.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub season: Account<'info, Season>,
+
+    #[account(
+        mut,
+        seeds = [SeasonEscrow::SEED, trader.key().as_ref(), current_season.to_le_bytes().as_ref()],
         bump
     )]
     pub season_escrow: Account<'info, SeasonEscrow>,
@@ -1076,6 +1106,7 @@ pub mod shingo_program {
     /// Errors if the trader does not have an active season
     /// Errors if the season to be closed isn't the current season
     /// Errors if the minimum number of episodes hasn't been reached
+    #[allow(clippy::arithmetic_side_effects)]
     pub fn close_season(ctx: Context<CloseSeason>) -> Result<()> {
         // --- guards
         // --- must be the signer and trader of the season to close it
@@ -1123,20 +1154,9 @@ pub mod shingo_program {
             .accounts
             .season_escrow
             .to_account_info()
-            .try_borrow_mut_lamports()? = ctx
-            .accounts
-            .season_escrow
-            .to_account_info()
-            .try_borrow_mut_lamports()?
-            .checked_sub(all_the_money_from_the_season)
-            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+            .try_borrow_mut_lamports()? -= all_the_money_from_the_season;
 
-        **ctx.accounts.trader.try_borrow_mut_lamports()? = ctx
-            .accounts
-            .trader
-            .try_borrow_mut_lamports()?
-            .checked_add(all_the_money_from_the_season)
-            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+        **ctx.accounts.trader.try_borrow_mut_lamports()? += all_the_money_from_the_season;
 
         emit!(SeasonFinale {
             trader: ctx.accounts.trader.key(),
@@ -1156,8 +1176,9 @@ pub mod shingo_program {
     /// Errors if the given season isn't the current season
     /// Errors if the season has reached its minimum number of episodes
     /// Errors if the time elapsed since last seen, is less than 31 days
-    pub fn force_close_season(ctx: Context<CloseSeason>) -> Result<()> {
+    pub fn force_close_season(ctx: Context<ForceCloseSeason>, current_season: u64) -> Result<()> {
         // --- guards
+
         const SECONDS_PER_MINUTE: i64 = 60;
         const MINUTES_PER_HOUR: i64 = 60 * SECONDS_PER_MINUTE;
         const HOURS_PER_DAY: i64 = 24 * MINUTES_PER_HOUR;
@@ -1171,6 +1192,11 @@ pub mod shingo_program {
             .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
 
         require!(time_elapsed >= THIRTY_ONE_DAYS, ShingoProgramError::Nono);
+
+        require!(
+            ctx.accounts.trader_account.current_season == current_season,
+            ShingoProgramError::Nono
+        );
 
         // --- the promised minimum number of episodes must not have been reached
         require!(
@@ -1212,6 +1238,7 @@ pub mod shingo_program {
     /// Called multiple times by the followers of a season that has been forcibly closed
     /// Ending a season makes all its signals decryptable by everyone
     #[allow(unused_variables)]
+    #[allow(clippy::arithmetic_side_effects)]
     pub fn claim_from_forcibly_closed_season(ctx: Context<Refund>, season_id: u64) -> Result<()> {
         // --- guards
         let season = &ctx.accounts.season;
@@ -1243,20 +1270,9 @@ pub mod shingo_program {
             .accounts
             .season_escrow
             .to_account_info()
-            .try_borrow_mut_lamports()? = ctx
-            .accounts
-            .season_escrow
-            .to_account_info()
-            .try_borrow_mut_lamports()?
-            .checked_sub(season.subscription_price)
-            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+            .try_borrow_mut_lamports()? -= season.subscription_price;
 
-        **ctx.accounts.signer.try_borrow_mut_lamports()? = ctx
-            .accounts
-            .signer
-            .try_borrow_mut_lamports()?
-            .checked_add(season.subscription_price)
-            .ok_or(ShingoProgramError::CheckedArithmeticFailure)?;
+        **ctx.accounts.signer.try_borrow_mut_lamports()? += season.subscription_price;
 
         // --- invalidate the follower claim's pass to prevent double claims
         let claim_pass = &mut ctx.accounts.claim_pass;
