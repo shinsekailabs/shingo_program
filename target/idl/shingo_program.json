@@ -548,6 +548,9 @@
         },
         {
           "name": "signal"
+        },
+        {
+          "name": "requester"
         }
       ],
       "args": [
@@ -871,9 +874,8 @@
                 "path": "trader"
               },
               {
-                "kind": "account",
-                "path": "trader_account.current_season",
-                "account": "TraderAccount"
+                "kind": "arg",
+                "path": "current_season"
               }
             ]
           }
@@ -906,15 +908,19 @@
                 "path": "trader"
               },
               {
-                "kind": "account",
-                "path": "trader_account.current_season",
-                "account": "TraderAccount"
+                "kind": "arg",
+                "path": "current_season"
               }
             ]
           }
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "current_season",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "init_decrypt_signal_comp_def",
@@ -1551,6 +1557,9 @@
         {
           "name": "revealed_signal",
           "writable": true
+        },
+        {
+          "name": "requester"
         }
       ],
       "args": [
@@ -1863,6 +1872,19 @@
         184,
         196,
         55
+      ]
+    },
+    {
+      "name": "ComputationAborted",
+      "discriminator": [
+        187,
+        246,
+        150,
+        2,
+        249,
+        125,
+        61,
+        84
       ]
     },
     {
@@ -2190,6 +2212,10 @@
           {
             "name": "timeframe",
             "type": "u64"
+          },
+          {
+            "name": "requester",
+            "type": "pubkey"
           }
         ]
       }
@@ -2328,6 +2354,18 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComputationAborted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "requester",
+            "type": "pubkey"
           }
         ]
       }
@@ -2877,6 +2915,10 @@
                 32
               ]
             }
+          },
+          {
+            "name": "requester",
+            "type": "pubkey"
           }
         ]
       }
