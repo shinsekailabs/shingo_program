@@ -40,13 +40,13 @@ Traders publish trading signals ( i.e stock tips ), and these signals are the ep
 Contract address / ProgramID :
 
 ```
-DRaMBWHQNUYEDd54H5KNRyuR3mXPECxVVLWDtbEeDz5a
+in maintenance for version upgrade
 ```
 
 MXE Public Key of the contract 
 
 ```
-8edGLiSJNe2Yf5fuxjMyhJiTXmV1n4o2qWUzKZ9XnWvr
+in maintenance for version upgrade
 ```
 
 Explorer link : https://explorer.solana.com/address/DRaMBWHQNUYEDd54H5KNRyuR3mXPECxVVLWDtbEeDz5a?cluster=devnet

@@ -285,6 +285,7 @@ pub struct ObservableSignal {
     pub leverage: [u8; 32],
     pub venue: [u8; 32],
     pub timeframe: [u8; 32],
+    pub requester: Pubkey,
 }
 
 #[event]
@@ -303,6 +304,7 @@ pub struct ClearSignal {
     pub leverage: u64,
     pub venue: u64,
     pub timeframe: u64,
+    pub requester: Pubkey,
 }
 
 #[event]
@@ -335,6 +337,11 @@ pub struct NewTrader {
 pub struct ForciblyClosedSeason {
     pub trader: Pubkey,
     pub season: u64,
+}
+
+#[event]
+pub struct ComputationAborted {
+    pub requester: Pubkey,
 }
 
 // ##########################################
@@ -746,6 +753,8 @@ pub struct DecryptSignalCallback<'info> {
     pub instructions_sysvar: UncheckedAccount<'info>,
 
     pub signal: Box<Account<'info, Signal>>,
+
+    pub requester: SystemAccount<'info>,
 }
 
 // ################     Reveal signal       ###############
@@ -901,6 +910,8 @@ pub struct RevealSignalCallback<'info> {
 
     #[account(mut)]
     pub revealed_signal: Box<Account<'info, RevealedSignal>>,
+
+    pub requester: SystemAccount<'info>,
 }
 
 // ###################################
@@ -1433,10 +1444,16 @@ pub mod shingo_program {
             vec![DecryptSignalCallback::callback_ix(
                 computation_offset,
                 &ctx.accounts.mxe_account,
-                &[CallbackAccount {
-                    pubkey: ctx.accounts.signal.key(),
-                    is_writable: false,
-                }],
+                &[
+                    CallbackAccount {
+                        pubkey: ctx.accounts.signal.key(),
+                        is_writable: false,
+                    },
+                    CallbackAccount {
+                        pubkey: ctx.accounts.follower.key(),
+                        is_writable: false,
+                    },
+                ],
             )?],
             1,
             0,
@@ -1455,6 +1472,9 @@ pub mod shingo_program {
             &ctx.accounts.cluster_account,
             &ctx.accounts.computation_account,
         ) else {
+            emit!(ComputationAborted {
+                requester: ctx.accounts.requester.key()
+            });
             return Err(ShingoProgramError::AbortedComputation.into());
         };
 
@@ -1497,6 +1517,7 @@ pub mod shingo_program {
             leverage,
             venue,
             timeframe,
+            requester: ctx.accounts.requester.key(),
         });
 
         Ok(())
@@ -1582,6 +1603,10 @@ pub mod shingo_program {
                         pubkey: ctx.accounts.revealed_signal.key(),
                         is_writable: true,
                     },
+                    CallbackAccount {
+                        pubkey: ctx.accounts.payer.key(),
+                        is_writable: true,
+                    },
                 ],
             )?],
             1,
@@ -1602,6 +1627,9 @@ pub mod shingo_program {
             &ctx.accounts.cluster_account,
             &ctx.accounts.computation_account,
         ) else {
+            emit!(ComputationAborted {
+                requester: ctx.accounts.requester.key()
+            });
             return Err(ShingoProgramError::AbortedComputation.into());
         };
 
@@ -1648,6 +1676,7 @@ pub mod shingo_program {
             leverage: leverage,
             venue: venue,
             timeframe: timeframe,
+            requester: ctx.accounts.requester.key()
         });
 
         Ok(())
