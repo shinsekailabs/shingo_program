@@ -14,7 +14,11 @@ Solana developers' announcement tweet : https://x.com/solana_devs/status/2022385
 
 ![Winners tweet](./docs/winner_shingo.png) 
 
-Shingo is a SocialFi application that aims to make paid Telegram VIP trading groups obsolete. Shingo allows Traders to monetize their expertise with encrypted signals (i.e stock tips) stored on-chain that only their subscribers can decrypt. Once the signals are stale, anybody can make them public, thus proving their track record. Users subscribe to a trader for early access to the signals after checking a trader's on-chain record. Signals, subscriptions + payments, track records are all on-chain. Arcium MPC powers the encryption and nobody owns the keys on a trusted server.
+Shingo is a SocialFi application that aims to make paid Telegram VIP trading groups obsolete. Shingo allows Traders to monetize their expertise with encrypted signals (i.e stock tips) stored on-chain that only their subscribers can decrypt.
+
+Once the signals are stale, anybody can make them public, thus proving their track record. Users subscribe to a trader for early access to the signals after checking a trader's on-chain record.
+
+Signals, subscriptions + payments, track records are all on-chain. Arcium MPC powers the encryption and nobody owns the keys on a trusted server.
 
 ## Using Arcium for decentralized encryption and decryption
 
